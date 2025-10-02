@@ -55,7 +55,19 @@
                         </h2>
                     </div>
                     <div class="card-footer">
-                        <button class="btn btn-primary" id="flip-btn">Show Answer</button>
+                        <div class="answer-choices" id="answer-choices">
+                            {% if current_card and current_card.trivia_question.choices %}
+                                <button class="btn btn-choice choice-a" id="choice-0" data-choice="0">
+                                    A) {{ current_card.trivia_question.choices[0] }}
+                                </button>
+                                <button class="btn btn-choice choice-b" id="choice-1" data-choice="1">
+                                    B) {{ current_card.trivia_question.choices[1] }}
+                                </button>
+                            {% endif %}
+                        </div>
+                        <div class="feedback-message" id="feedback-message" style="display: none;">
+                            <span id="feedback-text"></span>
+                        </div>
                     </div>
                 </div>
 
@@ -63,6 +75,9 @@
                 <div class="flip-card-back">
                     <div class="card-header">
                         <span class="answer-label">Answer</span>
+                        <div class="result-indicator" id="result-indicator">
+                            <span id="result-text"></span>
+                        </div>
                     </div>
                     <div class="card-content">
                         <h2 class="answer-text" id="answer-text">
@@ -75,8 +90,8 @@
                         {% endif %}
                     </div>
                     <div class="card-footer answer-buttons">
-                        <button class="btn btn-success" id="correct-btn">✓ Correct</button>
-                        <button class="btn btn-danger" id="incorrect-btn">✗ Incorrect</button>
+                        <button class="btn btn-primary" id="next-card-btn">Next Card →</button>
+                        <button class="btn btn-secondary" id="flip-back-btn">← Back to Question</button>
                     </div>
                 </div>
             </div>

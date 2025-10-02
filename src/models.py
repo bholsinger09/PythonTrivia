@@ -25,19 +25,53 @@ class Category(Enum):
 
 
 class TriviaQuestion:
-    """Represents a single trivia question with answer and metadata"""
+    """Represents a single trivia question with multiple choice answers"""
     
     def __init__(self, 
                  question: str, 
                  answer: str, 
                  category: Category, 
                  difficulty: Difficulty,
-                 explanation: Optional[str] = None):
+                 explanation: Optional[str] = None,
+                 choices: Optional[List[str]] = None,
+                 correct_choice_index: Optional[int] = None):
         self.question = question
         self.answer = answer
         self.category = category
         self.difficulty = difficulty
         self.explanation = explanation
+        
+        # Multiple choice support
+        if choices and correct_choice_index is not None:
+            self.choices = choices
+            self.correct_choice_index = correct_choice_index
+        else:
+            # Generate simple True/False choices if none provided
+            self.choices = [answer, self._generate_wrong_answer()]
+            self.correct_choice_index = 0
+            
+    def _generate_wrong_answer(self) -> str:
+        """Generate a plausible wrong answer based on the correct answer"""
+        answer_lower = self.answer.lower()
+        
+        # Common wrong answers for different types
+        if answer_lower in ['true', 'yes', 'correct']:
+            return 'False'
+        elif answer_lower in ['false', 'no', 'incorrect']:
+            return 'True'
+        elif 'list' in answer_lower:
+            return 'tuple'
+        elif 'tuple' in answer_lower:
+            return 'list'
+        elif 'dict' in answer_lower or 'dictionary' in answer_lower:
+            return 'list'
+        elif 'def' in answer_lower:
+            return 'class'
+        elif 'class' in answer_lower:
+            return 'def'
+        else:
+            # Generic wrong answer
+            return f"Not {self.answer}"
         
     def to_dict(self) -> Dict:
         """Convert question to dictionary for JSON serialization"""
@@ -46,7 +80,9 @@ class TriviaQuestion:
             'answer': self.answer,
             'category': self.category.value,
             'difficulty': self.difficulty.value,
-            'explanation': self.explanation
+            'explanation': self.explanation,
+            'choices': self.choices,
+            'correct_choice_index': self.correct_choice_index
         }
     
     @classmethod
@@ -57,7 +93,9 @@ class TriviaQuestion:
             answer=data['answer'],
             category=Category(data['category']),
             difficulty=Difficulty(data['difficulty']),
-            explanation=data.get('explanation')
+            explanation=data.get('explanation'),
+            choices=data.get('choices'),
+            correct_choice_index=data.get('correct_choice_index')
         )
 
 

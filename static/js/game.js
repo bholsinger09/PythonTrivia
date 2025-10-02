@@ -1,10 +1,12 @@
-// Game-specific JavaScript for trivia functionality
+// Enhanced Game JavaScript for Multiple Choice Trivia
 class TriviaGame {
     constructor() {
         this.currentCard = null;
         this.gameStats = null;
         this.isFlipped = false;
         this.isLoading = false;
+        this.selectedChoice = null;
+        this.hasAnswered = false;
 
         this.init();
     }
@@ -16,23 +18,8 @@ class TriviaGame {
     }
 
     setupEventListeners() {
-        // Flip card button
-        const flipBtn = document.getElementById('flip-btn');
-        if (flipBtn) {
-            flipBtn.addEventListener('click', () => this.flipCard());
-        }
-
-        // Answer buttons
-        const correctBtn = document.getElementById('correct-btn');
-        const incorrectBtn = document.getElementById('incorrect-btn');
-
-        if (correctBtn) {
-            correctBtn.addEventListener('click', () => this.answerCard(true));
-        }
-
-        if (incorrectBtn) {
-            incorrectBtn.addEventListener('click', () => this.answerCard(false));
-        }
+        // Choice buttons
+        this.setupChoiceButtons();
 
         // Navigation buttons
         const prevBtn = document.getElementById('prev-btn');
@@ -52,16 +39,27 @@ class TriviaGame {
             resetBtn.addEventListener('click', () => this.resetGame());
         }
 
-        // Card click to flip (optional UX enhancement)
-        const flipCard = document.getElementById('flip-card');
-        if (flipCard) {
-            flipCard.addEventListener('click', (e) => {
-                // Only flip if clicking on the card itself, not buttons
-                if (!e.target.closest('.btn') && !this.isFlipped) {
-                    this.flipCard();
-                }
-            });
+        // Next card button (on back of card)
+        const nextCardBtn = document.getElementById('next-card-btn');
+        if (nextCardBtn) {
+            nextCardBtn.addEventListener('click', () => this.nextCard());
         }
+
+        // Flip back button
+        const flipBackBtn = document.getElementById('flip-back-btn');
+        if (flipBackBtn) {
+            flipBackBtn.addEventListener('click', () => this.flipBack());
+        }
+    }
+
+    setupChoiceButtons() {
+        const choiceButtons = document.querySelectorAll('.btn-choice');
+        choiceButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const choiceIndex = parseInt(e.target.dataset.choice);
+                this.selectAnswer(choiceIndex);
+            });
+        });
     }
 
     setupKeyboardControls() {
@@ -70,11 +68,20 @@ class TriviaGame {
             if (this.isLoading) return;
 
             switch (e.key) {
-                case ' ':
-                case 'Enter':
+                case '1':
+                case 'a':
+                case 'A':
                     e.preventDefault();
-                    if (!this.isFlipped) {
-                        this.flipCard();
+                    if (!this.hasAnswered && !this.isFlipped) {
+                        this.selectAnswer(0);
+                    }
+                    break;
+                case '2':
+                case 'b':
+                case 'B':
+                    e.preventDefault();
+                    if (!this.hasAnswered && !this.isFlipped) {
+                        this.selectAnswer(1);
                     }
                     break;
                 case 'ArrowLeft':
@@ -82,27 +89,142 @@ class TriviaGame {
                     this.previousCard();
                     break;
                 case 'ArrowRight':
-                    e.preventDefault();
-                    this.nextCard();
-                    break;
-                case '1':
+                case ' ':
+                case 'Enter':
                     e.preventDefault();
                     if (this.isFlipped) {
-                        this.answerCard(true);
-                    }
-                    break;
-                case '2':
-                    e.preventDefault();
-                    if (this.isFlipped) {
-                        this.answerCard(false);
+                        this.nextCard();
                     }
                     break;
                 case 'r':
                     e.preventDefault();
                     this.resetGame();
                     break;
+                case 'Escape':
+                    e.preventDefault();
+                    if (this.isFlipped) {
+                        this.flipBack();
+                    }
+                    break;
             }
         });
+    }
+
+    async selectAnswer(choiceIndex) {
+        if (this.hasAnswered || this.isLoading || this.isFlipped) return;
+
+        try {
+            this.setLoadingState(true);
+            this.selectedChoice = choiceIndex;
+            this.hasAnswered = true;
+
+            // Update UI to show selection
+            this.highlightChoice(choiceIndex);
+
+            // Make API call to submit answer
+            const response = await this.makeApiCall('/api/answer-card', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    choice_index: choiceIndex
+                })
+            });
+
+            if (response.success) {
+                this.currentCard = response.card;
+                this.gameStats = response.game_stats;
+                
+                // Show immediate feedback
+                this.showAnswerFeedback(response.correct, response.correct_answer);
+                
+                // Auto-flip to show answer after a delay
+                setTimeout(() => {
+                    if (response.correct) {
+                        // If correct, show success message briefly then auto-advance
+                        setTimeout(() => {
+                            this.nextCard();
+                        }, 1500);
+                    } else {
+                        // If incorrect, flip to show correct answer
+                        this.flipToAnswer();
+                    }
+                }, 1000);
+
+            } else {
+                this.showNotification('Failed to submit answer', 'error');
+                this.hasAnswered = false;
+            }
+        } catch (error) {
+            console.error('Error submitting answer:', error);
+            this.showNotification('Error submitting answer', 'error');
+            this.hasAnswered = false;
+        } finally {
+            this.setLoadingState(false);
+        }
+    }
+
+    highlightChoice(selectedIndex) {
+        const choiceButtons = document.querySelectorAll('.btn-choice');
+        const correctIndex = this.currentCard?.correct_choice_index || 0;
+
+        choiceButtons.forEach((button, index) => {
+            button.classList.add('disabled');
+            
+            if (index === selectedIndex) {
+                if (index === correctIndex) {
+                    button.classList.add('correct');
+                } else {
+                    button.classList.add('incorrect');
+                }
+            } else if (index === correctIndex && selectedIndex !== correctIndex) {
+                // Show correct answer if user selected wrong
+                button.classList.add('correct');
+            }
+        });
+    }
+
+    showAnswerFeedback(isCorrect, correctAnswer) {
+        const feedbackElement = document.getElementById('feedback-message');
+        const feedbackText = document.getElementById('feedback-text');
+        
+        if (feedbackElement && feedbackText) {
+            feedbackElement.style.display = 'block';
+            feedbackElement.className = `feedback-message ${isCorrect ? 'correct' : 'incorrect'}`;
+            feedbackText.textContent = isCorrect ? 
+                '🎉 Correct!' : 
+                `❌ Incorrect. The answer is: ${correctAnswer}`;
+        }
+    }
+
+    flipToAnswer() {
+        this.isFlipped = true;
+        this.animateFlip();
+        this.updateAnswerDisplay();
+    }
+
+    flipBack() {
+        this.isFlipped = false;
+        this.hasAnswered = false;
+        this.selectedChoice = null;
+        this.animateFlipBack();
+        this.resetChoiceButtons();
+        this.hideFeedback();
+    }
+
+    resetChoiceButtons() {
+        const choiceButtons = document.querySelectorAll('.btn-choice');
+        choiceButtons.forEach(button => {
+            button.classList.remove('disabled', 'correct', 'incorrect');
+        });
+    }
+
+    hideFeedback() {
+        const feedbackElement = document.getElementById('feedback-message');
+        if (feedbackElement) {
+            feedbackElement.style.display = 'none';
+        }
     }
 
     async loadCurrentCard() {
@@ -115,6 +237,9 @@ class TriviaGame {
             if (response.success) {
                 this.currentCard = response.card;
                 this.gameStats = response.game_stats;
+                this.isFlipped = false;
+                this.hasAnswered = false;
+                this.selectedChoice = null;
                 this.updateUI();
             } else {
                 this.showNotification('Failed to load card', 'error');
@@ -122,62 +247,6 @@ class TriviaGame {
         } catch (error) {
             console.error('Error loading card:', error);
             this.showNotification('Error loading card', 'error');
-        } finally {
-            this.setLoadingState(false);
-        }
-    }
-
-    async flipCard() {
-        if (this.isLoading || this.isFlipped) return;
-
-        try {
-            this.setLoadingState(true);
-            const response = await this.makeApiCall('/api/flip-card', {
-                method: 'POST'
-            });
-
-            if (response.success) {
-                this.currentCard = response.card;
-                this.isFlipped = true;
-                this.animateFlip();
-                this.updateUI();
-            }
-        } catch (error) {
-            console.error('Error flipping card:', error);
-        } finally {
-            this.setLoadingState(false);
-        }
-    }
-
-    async answerCard(isCorrect) {
-        if (this.isLoading) return;
-
-        try {
-            this.setLoadingState(true);
-            const response = await this.makeApiCall('/api/answer-card', {
-                method: 'POST',
-                body: JSON.stringify({ correct: isCorrect })
-            });
-
-            if (response.success) {
-                this.currentCard = response.card;
-                this.gameStats = response.game_stats;
-                this.updateUI();
-
-                // Show feedback
-                const message = isCorrect ? 'Correct! 🎉' : 'Incorrect 😔';
-                const type = isCorrect ? 'success' : 'error';
-                this.showNotification(message, type);
-
-                // Auto-advance after a short delay
-                setTimeout(() => {
-                    if (this.gameStats.current_index < this.gameStats.total_cards - 1) {
-                        this.nextCard();
-                    }
-                }, 1500);
-            }
-        } catch (error) {
-            console.error('Error answering card:', error);
         } finally {
             this.setLoadingState(false);
         }
@@ -196,13 +265,14 @@ class TriviaGame {
                 this.currentCard = response.card;
                 this.gameStats = response.game_stats;
                 this.isFlipped = false;
-                this.resetCardAnimation();
+                this.hasAnswered = false;
+                this.selectedChoice = null;
                 this.updateUI();
-            } else {
-                this.showNotification('No more cards available', 'info');
+            } else if (response.message === 'No more cards') {
+                this.showGameComplete();
             }
         } catch (error) {
-            console.error('Error loading next card:', error);
+            console.error('Error moving to next card:', error);
         } finally {
             this.setLoadingState(false);
         }
@@ -221,91 +291,120 @@ class TriviaGame {
                 this.currentCard = response.card;
                 this.gameStats = response.game_stats;
                 this.isFlipped = false;
-                this.resetCardAnimation();
+                this.hasAnswered = false;
+                this.selectedChoice = null;
                 this.updateUI();
-            } else {
-                this.showNotification('No previous card available', 'info');
             }
         } catch (error) {
-            console.error('Error loading previous card:', error);
+            console.error('Error moving to previous card:', error);
         } finally {
             this.setLoadingState(false);
         }
     }
 
-    async resetGame() {
-        if (this.isLoading) return;
+    updateUI() {
+        if (!this.currentCard) return;
 
-        if (confirm('Are you sure you want to reset the game? All progress will be lost.')) {
-            try {
-                this.setLoadingState(true);
-                const response = await this.makeApiCall('/api/reset-game', {
-                    method: 'POST'
-                });
+        // Update question and choices
+        this.updateQuestionText();
+        this.updateChoices();
+        this.updateGameStats();
+        this.updateProgressBar();
+        this.updateNavigationButtons();
+        this.resetChoiceButtons();
+        this.hideFeedback();
 
-                if (response.success) {
-                    this.currentCard = response.card;
-                    this.gameStats = response.game_stats;
-                    this.isFlipped = false;
-                    this.resetCardAnimation();
-                    this.updateUI();
-                    this.showNotification('Game reset successfully!', 'success');
-                }
-            } catch (error) {
-                console.error('Error resetting game:', error);
-            } finally {
-                this.setLoadingState(false);
-            }
+        // Reset flip state
+        if (this.isFlipped) {
+            this.updateAnswerDisplay();
+        } else {
+            this.animateFlipBack();
         }
     }
 
-    updateUI() {
-        if (!this.currentCard || !this.gameStats) return;
+    updateQuestionText() {
+        const questionElement = document.getElementById('question-text');
+        if (questionElement && this.currentCard) {
+            questionElement.textContent = this.currentCard.question;
+        }
+    }
 
-        // Update game stats
-        this.updateElement('current-card', this.gameStats.current_index + 1);
-        this.updateElement('current-score', this.gameStats.score);
-        this.updateElement('accuracy-percentage', `${this.gameStats.percentage}%`);
+    updateChoices() {
+        if (!this.currentCard?.choices) return;
 
-        // Update progress bar
+        const choice0 = document.getElementById('choice-0');
+        const choice1 = document.getElementById('choice-1');
+
+        if (choice0 && this.currentCard.choices[0]) {
+            choice0.innerHTML = `A) ${this.currentCard.choices[0]}`;
+        }
+
+        if (choice1 && this.currentCard.choices[1]) {
+            choice1.innerHTML = `B) ${this.currentCard.choices[1]}`;
+        }
+    }
+
+    updateAnswerDisplay() {
+        const answerElement = document.getElementById('answer-text');
+        const explanationElement = document.getElementById('explanation');
+        const resultIndicator = document.getElementById('result-indicator');
+        const resultText = document.getElementById('result-text');
+
+        if (answerElement && this.currentCard) {
+            answerElement.textContent = this.currentCard.answer;
+        }
+
+        if (explanationElement && this.currentCard?.explanation) {
+            explanationElement.innerHTML = `<p><strong>Explanation:</strong> ${this.currentCard.explanation}</p>`;
+            explanationElement.style.display = 'block';
+        } else if (explanationElement) {
+            explanationElement.style.display = 'none';
+        }
+
+        // Show result indicator
+        if (resultIndicator && resultText && this.hasAnswered) {
+            const isCorrect = this.selectedChoice === this.currentCard.correct_choice_index;
+            resultIndicator.className = `result-indicator ${isCorrect ? 'correct' : 'incorrect'}`;
+            resultText.textContent = isCorrect ? '✓ Correct' : '✗ Incorrect';
+            resultIndicator.style.display = 'inline-block';
+        } else if (resultIndicator) {
+            resultIndicator.style.display = 'none';
+        }
+    }
+
+    updateGameStats() {
+        if (!this.gameStats) return;
+
+        const currentCardElement = document.getElementById('current-card');
+        const currentScoreElement = document.getElementById('current-score');
+        const accuracyElement = document.getElementById('accuracy-percentage');
+
+        if (currentCardElement) {
+            currentCardElement.textContent = this.gameStats.current_index + 1;
+        }
+
+        if (currentScoreElement) {
+            currentScoreElement.textContent = this.gameStats.score;
+        }
+
+        if (accuracyElement) {
+            accuracyElement.textContent = `${this.gameStats.percentage}%`;
+        }
+    }
+
+    updateProgressBar() {
+        if (!this.gameStats) return;
+
         const progressFill = document.getElementById('progress-fill');
         if (progressFill) {
             const percentage = ((this.gameStats.current_index + 1) / this.gameStats.total_cards) * 100;
             progressFill.style.width = `${percentage}%`;
         }
-
-        // Update card content
-        this.updateElement('category-badge',
-            this.currentCard.trivia_question.category.replace('_', ' ').toUpperCase());
-        this.updateElement('difficulty-badge',
-            this.currentCard.trivia_question.difficulty.toUpperCase());
-        this.updateElement('question-text', this.currentCard.trivia_question.question);
-        this.updateElement('answer-text', this.currentCard.trivia_question.answer);
-
-        // Update explanation if it exists
-        const explanation = document.getElementById('explanation');
-        if (explanation && this.currentCard.trivia_question.explanation) {
-            explanation.innerHTML = `<p><strong>Explanation:</strong> ${this.currentCard.trivia_question.explanation}</p>`;
-        }
-
-        // Update navigation button states
-        this.updateNavigationButtons();
-
-        // Update card flip state
-        if (this.currentCard.is_flipped && !this.isFlipped) {
-            this.isFlipped = true;
-            this.animateFlip();
-        }
-    }
-
-    updateElement(id, content) {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = content;
-        }
     }
 
     updateNavigationButtons() {
+        if (!this.gameStats) return;
+
         const prevBtn = document.getElementById('prev-btn');
         const nextBtn = document.getElementById('next-btn');
 
@@ -319,74 +418,122 @@ class TriviaGame {
     }
 
     animateFlip() {
-        const flipCard = document.getElementById('flip-card');
-        if (flipCard) {
-            flipCard.classList.add('flipped');
+        const flipCardInner = document.getElementById('flip-card-inner');
+        if (flipCardInner) {
+            flipCardInner.style.transform = 'rotateY(180deg)';
         }
     }
 
-    resetCardAnimation() {
-        const flipCard = document.getElementById('flip-card');
-        if (flipCard) {
-            flipCard.classList.remove('flipped');
+    animateFlipBack() {
+        const flipCardInner = document.getElementById('flip-card-inner');
+        if (flipCardInner) {
+            flipCardInner.style.transform = 'rotateY(0deg)';
         }
     }
 
-    setLoadingState(isLoading) {
-        this.isLoading = isLoading;
-        const spinner = document.getElementById('loading-spinner');
+    showGameComplete() {
+        const accuracy = this.gameStats ? this.gameStats.percentage : 0;
+        const score = this.gameStats ? this.gameStats.score : 0;
+        const total = this.gameStats ? this.gameStats.total_cards : 0;
 
-        if (spinner) {
-            spinner.style.display = isLoading ? 'block' : 'none';
+        const message = `🎉 Game Complete!\n\nFinal Score: ${score}/${total}\nAccuracy: ${accuracy}%\n\nWould you like to play again?`;
+        
+        if (confirm(message)) {
+            this.resetGame();
         }
+    }
 
-        // Disable all interactive elements during loading
-        const buttons = document.querySelectorAll('.btn');
-        buttons.forEach(btn => {
-            if (isLoading) {
-                btn.disabled = true;
-                btn.classList.add('loading');
-            } else {
-                btn.classList.remove('loading');
-                // Re-enable based on current state
-                this.updateNavigationButtons();
+    async resetGame() {
+        if (this.isLoading) return;
+
+        try {
+            this.setLoadingState(true);
+            const response = await this.makeApiCall('/api/reset-game', {
+                method: 'POST'
+            });
+
+            if (response.success) {
+                this.currentCard = response.card;
+                this.gameStats = response.game_stats;
+                this.isFlipped = false;
+                this.hasAnswered = false;
+                this.selectedChoice = null;
+                this.updateUI();
+                this.showNotification('Game reset successfully!', 'success');
             }
-        });
+        } catch (error) {
+            console.error('Error resetting game:', error);
+        } finally {
+            this.setLoadingState(false);
+        }
+    }
+
+    setLoadingState(loading) {
+        this.isLoading = loading;
+        const spinner = document.getElementById('loading-spinner');
+        if (spinner) {
+            spinner.style.display = loading ? 'flex' : 'none';
+        }
     }
 
     async makeApiCall(url, options = {}) {
-        if (window.triviaApp) {
-            return await window.triviaApp.makeApiCall(url, options);
-        } else {
-            // Fallback if main app is not available
-            const response = await fetch(url, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...options.headers
-                },
-                ...options
-            });
-            return await response.json();
+        const response = await fetch(url, {
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            },
+            ...options
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        return await response.json();
     }
 
-    showNotification(message, type) {
-        if (window.triviaApp) {
-            window.triviaApp.showNotification(message, type);
-        } else {
-            console.log(`${type.toUpperCase()}: ${message}`);
+    showNotification(message, type = 'info') {
+        // Create notification element if it doesn't exist
+        let notification = document.getElementById('notification');
+        if (!notification) {
+            notification = document.createElement('div');
+            notification.id = 'notification';
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 1000;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+            `;
+            document.body.appendChild(notification);
         }
+
+        // Set notification style based on type
+        const colors = {
+            success: '#48bb78',
+            error: '#f56565',
+            info: '#4f46e5'
+        };
+
+        notification.style.backgroundColor = colors[type] || colors.info;
+        notification.textContent = message;
+        
+        // Show notification
+        notification.style.transform = 'translateX(0)';
+
+        // Hide after 3 seconds
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+        }, 3000);
     }
 }
 
-// Initialize the game when DOM is loaded
+// Initialize game when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('flip-card')) {
-        window.triviaGame = new TriviaGame();
-    }
+    window.triviaGame = new TriviaGame();
 });
-
-// Export for use in tests
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = TriviaGame;
-}

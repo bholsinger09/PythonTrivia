@@ -22,56 +22,72 @@ def load_sample_questions():
             "<class 'list'>",
             Category.BASICS,
             Difficulty.EASY,
-            "The type() function returns the type of an object. An empty list [] is of type 'list'."
+            "The type() function returns the type of an object. An empty list [] is of type 'list'.",
+            choices=["<class 'list'>", "<class 'array'>"],
+            correct_choice_index=0
         ),
         TriviaQuestion(
             "Which Python keyword is used to define a function?",
             "def",
             Category.FUNCTIONS,
             Difficulty.EASY,
-            "The 'def' keyword is used to define functions in Python."
+            "The 'def' keyword is used to define functions in Python.",
+            choices=["def", "function"],
+            correct_choice_index=0
         ),
         TriviaQuestion(
             "What does PEP stand for in Python?",
             "Python Enhancement Proposal",
             Category.BASICS,
             Difficulty.MEDIUM,
-            "PEP stands for Python Enhancement Proposal, which are design documents for Python."
+            "PEP stands for Python Enhancement Proposal, which are design documents for Python.",
+            choices=["Python Enhancement Proposal", "Python Executable Package"],
+            correct_choice_index=0
         ),
         TriviaQuestion(
             "What is the difference between a list and a tuple in Python?",
             "Lists are mutable, tuples are immutable",
             Category.DATA_STRUCTURES,
             Difficulty.MEDIUM,
-            "Lists can be modified after creation (mutable), while tuples cannot be changed (immutable)."
+            "Lists can be modified after creation (mutable), while tuples cannot be changed (immutable).",
+            choices=["Lists are mutable, tuples are immutable", "Lists are immutable, tuples are mutable"],
+            correct_choice_index=0
         ),
         TriviaQuestion(
             "What is a decorator in Python?",
             "A function that modifies another function",
             Category.ADVANCED,
             Difficulty.HARD,
-            "Decorators are a way to modify or enhance functions without permanently modifying their code."
+            "Decorators are a way to modify or enhance functions without permanently modifying their code.",
+            choices=["A function that modifies another function", "A special type of class"],
+            correct_choice_index=0
         ),
         TriviaQuestion(
             "What does the __init__ method do in a Python class?",
             "Initializes a new instance of the class",
             Category.OOP,
             Difficulty.MEDIUM,
-            "The __init__ method is the constructor that initializes new objects when they are created."
+            "The __init__ method is the constructor that initializes new objects when they are created.",
+            choices=["Initializes a new instance of the class", "Destroys an instance of the class"],
+            correct_choice_index=0
         ),
         TriviaQuestion(
             "Which library is commonly used for data analysis in Python?",
             "pandas",
             Category.LIBRARIES,
             Difficulty.EASY,
-            "Pandas is the most popular library for data manipulation and analysis in Python."
+            "Pandas is the most popular library for data manipulation and analysis in Python.",
+            choices=["pandas", "numpy"],
+            correct_choice_index=0
         ),
         TriviaQuestion(
             "What is the Global Interpreter Lock (GIL) in Python?",
             "A mutex that prevents multiple threads from executing Python code simultaneously",
             Category.ADVANCED,
             Difficulty.HARD,
-            "The GIL ensures that only one thread executes Python bytecode at a time, affecting multi-threading performance."
+            "The GIL ensures that only one thread executes Python bytecode at a time, affecting multi-threading performance.",
+            choices=["A mutex that prevents multiple threads from executing Python code simultaneously", "A feature that speeds up multi-threaded programs"],
+            correct_choice_index=0
         )
     ]
     
@@ -137,16 +153,32 @@ def flip_card():
 
 @app.route('/api/answer-card', methods=['POST'])
 def answer_card():
-    """API endpoint to mark current card as correct or incorrect"""
+    """API endpoint to handle answer choice selection"""
     data = request.get_json()
-    is_correct = data.get('correct', False)
+    choice_index = data.get('choice_index')
     
-    game.answer_current_card(is_correct)
+    if choice_index is None:
+        return jsonify({'success': False, 'message': 'No choice provided'})
+    
     current_card = game.get_current_card()
+    if not current_card:
+        return jsonify({'success': False, 'message': 'No current card'})
+    
+    # Check if the selected choice is correct
+    is_correct = choice_index == current_card.trivia_question.correct_choice_index
+    
+    # Mark the card as answered
+    game.answer_current_card(is_correct)
+    
+    # Get the correct answer text
+    correct_answer = current_card.trivia_question.answer
     
     return jsonify({
         'success': True,
-        'card': current_card.to_dict() if current_card else None,
+        'correct': is_correct,
+        'correct_answer': correct_answer,
+        'selected_choice': choice_index,
+        'card': current_card.to_dict(),
         'game_stats': {
             'current_index': game.current_card_index,
             'total_cards': len(game.cards),
