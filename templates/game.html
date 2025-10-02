@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Python Trivia - Game{% endblock %}
+
+{% block content %}
+<div class="game-container">
+    <!-- Game Header -->
+    <div class="game-header">
+        <div class="game-stats">
+            <div class="stat-item">
+                <span class="stat-label">Card:</span>
+                <span class="stat-value" id="current-card">{{ game_stats.current_index + 1 }}</span>
+                <span class="stat-total">/ {{ game_stats.total_cards }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Score:</span>
+                <span class="stat-value" id="current-score">{{ game_stats.score }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Accuracy:</span>
+                <span class="stat-value" id="accuracy-percentage">{{ game_stats.percentage }}%</span>
+            </div>
+        </div>
+        <div class="game-controls">
+            <button class="btn btn-secondary" id="reset-game-btn">Reset Game</button>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width: {{ ((game_stats.current_index + 1) / game_stats.total_cards * 100) }}%"></div>
+        </div>
+    </div>
+
+    <!-- Flip Card -->
+    <div class="card-container">
+        <div class="flip-card" id="flip-card">
+            <div class="flip-card-inner" id="flip-card-inner">
+                <!-- Front of card (Question) -->
+                <div class="flip-card-front">
+                    <div class="card-header">
+                        <span class="category-badge" id="category-badge">
+                            {% if current_card %}{{ current_card.trivia_question.category.value.replace('_', ' ').title() }}{% endif %}
+                        </span>
+                        <span class="difficulty-badge" id="difficulty-badge">
+                            {% if current_card %}{{ current_card.trivia_question.difficulty.value.title() }}{% endif %}
+                        </span>
+                    </div>
+                    <div class="card-content">
+                        <h2 class="question-text" id="question-text">
+                            {% if current_card %}{{ current_card.trivia_question.question }}{% endif %}
+                        </h2>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn-primary" id="flip-btn">Show Answer</button>
+                    </div>
+                </div>
+
+                <!-- Back of card (Answer) -->
+                <div class="flip-card-back">
+                    <div class="card-header">
+                        <span class="answer-label">Answer</span>
+                    </div>
+                    <div class="card-content">
+                        <h2 class="answer-text" id="answer-text">
+                            {% if current_card %}{{ current_card.trivia_question.answer }}{% endif %}
+                        </h2>
+                        {% if current_card and current_card.trivia_question.explanation %}
+                        <div class="explanation" id="explanation">
+                            <p><strong>Explanation:</strong> {{ current_card.trivia_question.explanation }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer answer-buttons">
+                        <button class="btn btn-success" id="correct-btn">✓ Correct</button>
+                        <button class="btn btn-danger" id="incorrect-btn">✗ Incorrect</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="navigation-container">
+        <button class="btn btn-outline" id="prev-btn" {% if game_stats.current_index == 0 %}disabled{% endif %}>
+            ← Previous
+        </button>
+        <button class="btn btn-outline" id="next-btn" {% if game_stats.current_index >= game_stats.total_cards - 1 %}disabled{% endif %}>
+            Next →
+        </button>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loading-spinner" style="display: none;">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/game.js') }}"></script>
+{% endblock %}

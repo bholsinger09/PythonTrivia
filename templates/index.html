@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Python Trivia - Home{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">🐍 Python Trivia Challenge</h1>
+        <p class="hero-subtitle">Test your Python knowledge with interactive flip cards!</p>
+        <div class="hero-buttons">
+            <a href="/game" class="btn btn-primary" id="start-game-btn">Start Playing</a>
+            <a href="/categories" class="btn btn-secondary">Browse Categories</a>
+        </div>
+    </div>
+</div>
+
+<div class="features-section">
+    <div class="container">
+        <h2 class="section-title">Game Features</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📚</div>
+                <h3>Multiple Categories</h3>
+                <p>Questions covering basics, data structures, OOP, libraries, and advanced topics.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>Difficulty Levels</h3>
+                <p>Easy, Medium, and Hard questions to challenge programmers at all levels.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔄</div>
+                <h3>Interactive Cards</h3>
+                <p>Beautiful flip card animations with detailed explanations.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Score Tracking</h3>
+                <p>Keep track of your progress and see how well you're doing.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="stats-section">
+    <div class="container">
+        <h2 class="section-title">Quick Stats</h2>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number">8+</div>
+                <div class="stat-label">Trivia Questions</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">5</div>
+                <div class="stat-label">Categories</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Difficulty Levels</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

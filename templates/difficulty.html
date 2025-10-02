@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Python Trivia - Difficulty Levels{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">Difficulty Levels</h1>
+        <p class="page-subtitle">Choose your challenge level</p>
+    </div>
+
+    <div class="difficulty-grid">
+        {% for diff_key, diff_data in difficulties.items() %}
+        <div class="difficulty-card difficulty-{{ diff_key }}">
+            <div class="difficulty-icon">
+                {% if diff_key == 'easy' %}🟢
+                {% elif diff_key == 'medium' %}🟡
+                {% elif diff_key == 'hard' %}🔴
+                {% endif %}
+            </div>
+            <h3 class="difficulty-title">{{ diff_data.name }}</h3>
+            <p class="difficulty-count">{{ diff_data.count }} questions</p>
+            <div class="difficulty-description">
+                {% if diff_key == 'easy' %}
+                <p>Perfect for beginners learning Python basics</p>
+                {% elif diff_key == 'medium' %}
+                <p>Great for intermediate Python developers</p>
+                {% elif diff_key == 'hard' %}
+                <p>Challenging questions for Python experts</p>
+                {% endif %}
+            </div>
+            <a href="/game" class="btn btn-primary difficulty-btn">Play {{ diff_data.name }}</a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="tips-section">
+        <h2>💡 Tips for Success</h2>
+        <div class="tips-grid">
+            <div class="tip-item">
+                <h4>🎯 Start Easy</h4>
+                <p>Begin with easy questions to build confidence and review fundamentals.</p>
+            </div>
+            <div class="tip-item">
+                <h4>📖 Read Explanations</h4>
+                <p>Always read the explanations to learn from both correct and incorrect answers.</p>
+            </div>
+            <div class="tip-item">
+                <h4>🔄 Practice Regularly</h4>
+                <p>Regular practice helps reinforce Python concepts and improve retention.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-section">
+        <a href="/game" class="btn btn-primary">Play Mixed Difficulty</a>
+        <a href="/categories" class="btn btn-secondary">Browse Categories</a>
+    </div>
+</div>
+
+<style>
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    color: white;
+}
+
+.page-title {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.page-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.difficulty-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.difficulty-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2.5rem;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.difficulty-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #10b981;
+}
+
+.difficulty-card.difficulty-medium::before {
+    background: #f59e0b;
+}
+
+.difficulty-card.difficulty-hard::before {
+    background: #ef4444;
+}
+
+.difficulty-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+}
+
+.difficulty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.difficulty-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.difficulty-count {
+    color: #6b7280;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.difficulty-description {
+    margin-bottom: 2rem;
+}
+
+.difficulty-description p {
+    color: #4b5563;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.difficulty-btn {
+    width: 100%;
+}
+
+.tips-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 3rem;
+    margin: 3rem 0;
+    text-align: center;
+}
+
+.tips-section h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 2rem;
+}
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.tip-item {
+    text-align: left;
+    padding: 1.5rem;
+    background: #f9fafb;
+    border-radius: 12px;
+}
+
+.tip-item h4 {
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.tip-item p {
+    color: #6b7280;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.action-section {
+    text-align: center;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    margin-top: 2rem;
+}
+
+.action-section .btn {
+    margin: 0 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 2rem;
+    }
+    
+    .difficulty-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tips-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-section .btn {
+        display: block;
+        margin: 0.5rem 0;
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}

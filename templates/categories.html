@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Python Trivia - Categories{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">Question Categories</h1>
+        <p class="page-subtitle">Explore Python trivia by topic</p>
+    </div>
+
+    <div class="categories-grid">
+        {% for category_key, category_data in categories.items() %}
+        <div class="category-card">
+            <div class="category-icon">
+                {% if category_key == 'basics' %}📚
+                {% elif category_key == 'data_structures' %}🏗️
+                {% elif category_key == 'functions' %}⚙️
+                {% elif category_key == 'object_oriented_programming' %}🏷️
+                {% elif category_key == 'libraries' %}📦
+                {% elif category_key == 'advanced' %}🚀
+                {% else %}🐍
+                {% endif %}
+            </div>
+            <h3 class="category-title">{{ category_data.name }}</h3>
+            <p class="category-count">{{ category_data.count }} questions</p>
+            <a href="/game" class="btn btn-primary category-btn">Play Category</a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="action-section">
+        <a href="/game" class="btn btn-primary">Play All Categories</a>
+        <a href="/difficulty" class="btn btn-secondary">Browse by Difficulty</a>
+    </div>
+</div>
+
+<style>
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    color: white;
+}
+
+.page-title {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.page-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.category-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+}
+
+.category-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.category-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.category-count {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+}
+
+.category-btn {
+    width: 100%;
+}
+
+.action-section {
+    text-align: center;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    margin-top: 2rem;
+}
+
+.action-section .btn {
+    margin: 0 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 2rem;
+    }
+    
+    .action-section .btn {
+        display: block;
+        margin: 0.5rem 0;
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
