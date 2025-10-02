@@ -1,11 +1,10 @@
 """
 Database service layer for Python Trivia Game
 """
-from typing import List, Optional, Dict, Tuple
-from sqlalchemy import and_, or_, func
+from typing import List, Optional, Dict
+from sqlalchemy import func
 from models import db, User, Question, GameSession, Answer, Score, Category, Difficulty
 import uuid
-import json
 from datetime import datetime, timezone
 
 class QuestionService:
@@ -403,9 +402,12 @@ class DatabaseSeeder:
     @staticmethod
     def create_admin_user():
         """Create an admin user for testing"""
+        import os
+        # Use environment variable or default for demo purposes
+        admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
         admin = UserService.create_user(
             username="admin",
             email="admin@pythontrivia.com",
-            password="admin123"
+            password=admin_password
         )
         print(f"Created admin user: {admin.username}")

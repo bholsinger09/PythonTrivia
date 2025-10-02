@@ -1,23 +1,41 @@
 # Python Trivia Flip Card Game
 
-A comprehensive Python trivia game built with Flask and tested with Selenium automation. Features interactive flip cards, multiple categories, difficulty levels, and extensive test coverage.
+A comprehensive Python trivia game built with Flask, featuring database-backed user authentication, persistent game sessions, interactive leaderboards, and extensive test coverage.
 
-## 🎯 Features
+## ✨ Features
 
+### 🎮 Core Game Features
 - **Interactive Flip Cards**: Smooth CSS animations for card flipping
+- **Multiple Choice Questions**: A/B answer selection with instant feedback
 - **Multiple Categories**: Basics, Data Structures, Functions, OOP, Libraries, Advanced
-- **Difficulty Levels**: Easy, Medium, Hard questions
-- **Score Tracking**: Real-time scoring and accuracy calculation
-- **Responsive Design**: Works on desktop and mobile devices
-- **Keyboard Controls**: Full keyboard navigation support
-- **API-Driven**: RESTful API for all game operations
+- **Difficulty Levels**: Easy, Medium, Hard questions with adaptive scoring
+- **Real-time Progress**: Live score tracking and accuracy calculation
+
+### 👤 User Management
+- **User Authentication**: Secure registration and login with bcrypt password hashing
+- **User Profiles**: Comprehensive dashboards with statistics and achievements
+- **Session Persistence**: Game progress saved across browser sessions
+- **Anonymous Play**: Play without registration with session tracking
+
+### 🏆 Competitive Features
+- **Interactive Leaderboards**: Real-time rankings with filtering by category/difficulty
+- **Achievement System**: Unlock badges for various milestones
+- **Game History**: Track all past games and performance trends
+- **Score Statistics**: Detailed analytics on accuracy, streaks, and improvement
+
+### 🛠️ Technical Features
+- **Database Integration**: PostgreSQL with SQLAlchemy ORM
+- **RESTful API**: Complete API for all game operations
+- **Responsive Design**: Mobile-first design that works on all devices
 - **Test Automation**: Comprehensive Selenium test suite
+- **Production Ready**: Configured for deployment on Render, Heroku, and Railway
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Python 3.8+
+- PostgreSQL (for production) or SQLite (for development)
 - Chrome browser (for Selenium tests)
 - Virtual environment (recommended)
 
@@ -40,13 +58,22 @@ A comprehensive Python trivia game built with Flask and tested with Selenium aut
    pip install -r requirements.txt
    ```
 
-4. **Run the application**
+4. **Initialize the database**
+   ```bash
+   python init_db.py init
+   ```
+
+5. **Run the application**
    ```bash
    python app.py
    ```
 
-5. **Open your browser**
+6. **Open your browser**
    Navigate to `http://localhost:5001`
+
+### Demo Account
+- **Username**: `admin`
+- **Password**: `admin123`
 
 ## 🎮 How to Play
 

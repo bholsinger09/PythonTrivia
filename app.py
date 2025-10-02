@@ -1,10 +1,8 @@
 """
 Flask application for Python Trivia Flip Card Game
 """
-from flask import Flask, render_template, request, jsonify, session, g, redirect, url_for
-import json
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import os
-import uuid
 from datetime import datetime, timezone
 
 # Import both old and new models for compatibility
@@ -244,13 +242,28 @@ def register():
     """User registration"""
     if request.method == 'POST':
         data = request.get_json() if request.is_json else request.form
-        username = data.get('username')
-        email = data.get('email')
-        password = data.get('password')
+        username = data.get('username', '').strip()
+        email = data.get('email', '').strip().lower()
+        password = data.get('password', '')
         
-        # Basic validation
+        # Enhanced validation
         if not username or not email or not password:
             return jsonify({'success': False, 'message': 'All fields required'})
+        
+        # Username validation
+        if len(username) < 3 or len(username) > 20:
+            return jsonify({'success': False, 'message': 'Username must be 3-20 characters'})
+        
+        if not username.replace('_', '').isalnum():
+            return jsonify({'success': False, 'message': 'Username can only contain letters, numbers, and underscores'})
+        
+        # Email validation (basic)
+        if '@' not in email or '.' not in email.split('@')[-1]:
+            return jsonify({'success': False, 'message': 'Please enter a valid email address'})
+        
+        # Password validation
+        if len(password) < 6:
+            return jsonify({'success': False, 'message': 'Password must be at least 6 characters'})
         
         # Check if user exists
         if UserService.get_user_by_username(username):
@@ -265,9 +278,11 @@ def register():
             if request.is_json:
                 return jsonify({'success': True, 'message': 'Registration successful'})
             else:
-                login_user(user)
+                if HAS_LOGIN:
+                    login_user(user)
                 return redirect(url_for('game_page'))
         except Exception as e:
+            app.logger.error(f"Registration error: {e}")
             return jsonify({'success': False, 'message': 'Registration failed'})
     
     return render_template('register.html')
@@ -278,20 +293,35 @@ def login():
     """User login"""
     if request.method == 'POST':
         data = request.get_json() if request.is_json else request.form
-        username = data.get('username')
-        password = data.get('password')
+        username = data.get('username', '').strip()
+        password = data.get('password', '')
         
-        user = UserService.get_user_by_username(username)
+        # Input validation
+        if not username or not password:
+            return jsonify({'success': False, 'message': 'Username and password required'})
         
-        if user and user.check_password(password):
-            login_user(user)
-            if request.is_json:
-                return jsonify({'success': True, 'message': 'Login successful'})
+        if len(username) > 20 or len(password) > 255:
+            return jsonify({'success': False, 'message': 'Invalid credentials'})
+        
+        try:
+            user = UserService.get_user_by_username(username)
+            
+            if user and user.check_password(password):
+                if HAS_LOGIN:
+                    login_user(user)
+                if request.is_json:
+                    return jsonify({'success': True, 'message': 'Login successful'})
+                else:
+                    return redirect(url_for('game_page'))
             else:
-                return redirect(url_for('game_page'))
-        else:
+                if request.is_json:
+                    return jsonify({'success': False, 'message': 'Invalid credentials'})
+                else:
+                    return render_template('login.html', error='Invalid credentials')
+        except Exception as e:
+            app.logger.error(f"Login error: {e}")
             if request.is_json:
-                return jsonify({'success': False, 'message': 'Invalid credentials'})
+                return jsonify({'success': False, 'message': 'Login failed'})
             else:
                 return render_template('login.html', error='Invalid credentials')
     
