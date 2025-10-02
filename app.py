@@ -1,7 +1,21 @@
 """
 Flask application for Python Trivia Flip Card Game
+
+This module implements a complete trivia game application with:
+- Interactive flip card gameplay
+- User authentication and session management  
+- Database persistence for questions, users, and scores
+- RESTful API endpoints for game operations
+- Responsive web interface
+
+PEP 20 Principles Applied:
+- Beautiful is better than ugly: Clean, organized code structure
+- Explicit is better than implicit: Clear function signatures and return types
+- Simple is better than complex: Modular design with clear separation of concerns
+- Readability counts: Comprehensive docstrings and meaningful variable names
 """
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, Response
+from typing import Dict, List, Optional, Tuple, Union, Any
 import os
 from datetime import datetime, timezone
 
@@ -55,8 +69,19 @@ else:
 game = TriviaGame()
 
 
-def get_or_create_game_session():
-    """Get or create a game session for the current user/session"""
+def get_or_create_game_session() -> Optional[GameSession]:
+    """
+    Get or create a game session for the current user or anonymous session.
+    
+    This function implements session management for both authenticated and
+    anonymous users, maintaining game state across requests.
+    
+    Returns:
+        GameSession: Active game session for the current user/session
+        None: If session creation fails
+        
+    PEP 20: "Explicit is better than implicit" - clear return type and behavior
+    """
     try:
         session_token = session.get('game_session_token')
         game_session = None
@@ -76,8 +101,27 @@ def get_or_create_game_session():
         return None
 
 
-def load_questions_from_db(categories=None, difficulty=None, limit=20):
-    """Load questions from database instead of hardcoded list"""
+def load_questions_from_db(
+    categories: Optional[List[Category]] = None,
+    difficulty: Optional[Difficulty] = None,
+    limit: int = 20
+) -> List[TriviaQuestion]:
+    """
+    Load questions from database with optional filtering.
+    
+    Args:
+        categories: List of categories to filter by (optional)
+        difficulty: Difficulty level to filter by (optional)  
+        limit: Maximum number of questions to return (default: 20)
+        
+    Returns:
+        List[TriviaQuestion]: List of trivia questions from database
+        
+    Raises:
+        RuntimeError: If no application context is available
+        
+    PEP 20: "Simple is better than complex" - focused single responsibility
+    """
     try:
         # Ensure we're in app context
         if not app.app_context:
@@ -189,8 +233,14 @@ def load_sample_questions_fallback():
     return sample_questions
 
 
-def initialize_game_with_questions():
-    """Initialize game with questions from database or fallback"""
+def initialize_game_with_questions() -> None:
+    """
+    Initialize the global game instance with questions from database.
+    
+    Fallback to hardcoded questions if database unavailable.
+    
+    PEP 20: "Errors should never pass silently" - proper exception handling
+    """
     try:
         # Try to load from database first
         questions = load_questions_from_db()
@@ -207,8 +257,12 @@ def initialize_game_with_questions():
 
 
 # Database initialization
-def init_db():
-    """Initialize database tables and seed data if needed"""
+def init_db() -> None:
+    """
+    Initialize database tables and seed data if needed.
+    
+    PEP 20: "Simple is better than complex" - focused initialization
+    """
     try:
         with app.app_context():
             db.create_all()
@@ -236,10 +290,113 @@ def initialize_app():
         initialize_game_with_questions()
 
 
+# PEP 20 Validation helpers following "Simple is better than complex"
+def validate_username(username: str) -> Optional[str]:
+    """
+    Validate username according to application rules.
+    
+    Args:
+        username: Username string to validate
+        
+    Returns:
+        str: Error message if validation fails, None if valid
+        
+    PEP 20: "Simple is better than complex" - single responsibility validation
+    """
+    if not username or not username.strip():
+        return 'Username is required'
+    
+    username = username.strip()
+    if len(username) < 3 or len(username) > 20:
+        return 'Username must be 3-20 characters'
+    
+    if not username.replace('_', '').isalnum():
+        return 'Username can only contain letters, numbers, and underscores'
+    
+    return None
+
+
+def validate_email(email: str) -> Optional[str]:
+    """
+    Validate email according to application rules.
+    
+    Args:
+        email: Email string to validate
+        
+    Returns:
+        str: Error message if validation fails, None if valid
+        
+    PEP 20: "Explicit is better than implicit" - clear validation logic
+    """
+    if not email or not email.strip():
+        return 'Email is required'
+    
+    email = email.strip().lower()
+    if '@' not in email or '.' not in email.split('@')[-1]:
+        return 'Please enter a valid email address'
+    
+    return None
+
+
+def validate_password(password: str, confirm_password: str = None) -> Optional[str]:
+    """
+    Validate password according to application rules.
+    
+    Args:
+        password: Password string to validate
+        confirm_password: Optional password confirmation
+        
+    Returns:
+        str: Error message if validation fails, None if valid
+        
+    PEP 20: "Readability counts" - clear password validation
+    """
+    if not password:
+        return 'Password is required'
+    
+    if len(password) < 6:
+        return 'Password must be at least 6 characters'
+    
+    if confirm_password is not None and password != confirm_password:
+        return 'Passwords do not match'
+    
+    return None
+
+
+def check_user_exists(username: str, email: str) -> Optional[str]:
+    """
+    Check if user already exists in system.
+    
+    Args:
+        username: Username to check
+        email: Email to check
+        
+    Returns:
+        str: Error message if user exists, None if available
+        
+    PEP 20: "Simple is better than complex" - focused existence check
+    """
+    if UserService.get_user_by_username(username):
+        return 'Username already exists'
+    
+    if UserService.get_user_by_email(email):
+        return 'Email already registered'
+    
+    return None
+
+
 # Authentication routes
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    """User registration"""
+    """
+    User registration with PEP 20 compliant validation.
+    
+    Following "Simple is better than complex" - uses helper functions for validation.
+    Following "Explicit is better than implicit" - clear error handling.
+    
+    Returns:
+        Response: JSON or HTML response based on request type
+    """
     if request.method == 'POST':
         data = request.get_json() if request.is_json else request.form
         username = data.get('username', '').strip()
@@ -247,51 +404,16 @@ def register():
         password = data.get('password', '')
         confirm_password = data.get('confirm_password', '')
         
-        # Enhanced validation
-        if not username or not email or not password:
-            if request.is_json:
-                return jsonify({'success': False, 'message': 'All fields required'}), 400
-            return render_template('register.html', error='All fields required'), 400
+        # PEP 20: "Simple is better than complex" - use validation helpers
+        error = (validate_username(username) or 
+                validate_email(email) or 
+                validate_password(password, confirm_password) or
+                check_user_exists(username, email))
         
-        # Username validation
-        if len(username) < 3 or len(username) > 20:
+        if error:
             if request.is_json:
-                return jsonify({'success': False, 'message': 'Username must be 3-20 characters'}), 400
-            return render_template('register.html', error='Username must be 3-20 characters'), 400
-        
-        if not username.replace('_', '').isalnum():
-            if request.is_json:
-                return jsonify({'success': False, 'message': 'Username can only contain letters, numbers, and underscores'}), 400
-            return render_template('register.html', error='Username can only contain letters, numbers, and underscores'), 400
-        
-        # Email validation (basic)
-        if '@' not in email or '.' not in email.split('@')[-1]:
-            if request.is_json:
-                return jsonify({'success': False, 'message': 'Please enter a valid email address'}), 400
-            return render_template('register.html', error='Please enter a valid email address'), 400
-        
-        # Password validation
-        if len(password) < 6:
-            if request.is_json:
-                return jsonify({'success': False, 'message': 'Password must be at least 6 characters'}), 400
-            return render_template('register.html', error='Password must be at least 6 characters'), 400
-        
-        # Password confirmation check
-        if confirm_password and password != confirm_password:
-            if request.is_json:
-                return jsonify({'success': False, 'message': 'Passwords do not match'}), 400
-            return render_template('register.html', error='Passwords do not match'), 400
-        
-        # Check if user exists
-        if UserService.get_user_by_username(username):
-            if request.is_json:
-                return jsonify({'success': False, 'message': 'Username already exists'}), 400
-            return render_template('register.html', error='Username already exists'), 400
-        
-        if UserService.get_user_by_email(email):
-            if request.is_json:
-                return jsonify({'success': False, 'message': 'Email already registered'}), 400
-            return render_template('register.html', error='Email already registered'), 400
+                return jsonify({'success': False, 'message': error}), 400
+            return render_template('register.html', error=error), 400
         
         # Create user
         try:
@@ -312,8 +434,15 @@ def register():
 
 
 @app.route('/login', methods=['GET', 'POST'])
-def login():
-    """User login"""
+def login() -> Union[str, Response]:
+    """
+    User login with enhanced validation.
+    
+    Returns:
+        Union[str, Response]: HTML template or JSON response
+        
+    PEP 20: "Explicit is better than implicit" - clear return types
+    """
     if request.method == 'POST':
         data = request.get_json() if request.is_json else request.form
         username = data.get('username', '').strip()
@@ -474,8 +603,15 @@ def profile():
 
 
 @app.route('/')
-def index():
-    """Home page route"""
+def index() -> str:
+    """
+    Home page route.
+    
+    Returns:
+        str: Rendered HTML template
+        
+    PEP 20: "Simple is better than complex" - single responsibility
+    """
     return render_template('index.html')
 
 
@@ -486,8 +622,15 @@ def debug_page():
 
 
 @app.route('/game')
-def game_page():
-    """Main game page route"""
+def game_page() -> str:
+    """
+    Main game page route.
+    
+    Returns:
+        str: Rendered HTML template
+        
+    PEP 20: "Beautiful is better than ugly" - clean route organization
+    """
     if not game.cards:
         initialize_game_with_questions()
     
