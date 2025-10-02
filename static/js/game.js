@@ -135,10 +135,10 @@ class TriviaGame {
             if (response.success) {
                 this.currentCard = response.card;
                 this.gameStats = response.game_stats;
-                
+
                 // Show immediate feedback
                 this.showAnswerFeedback(response.correct, response.correct_answer);
-                
+
                 // Auto-flip to show answer after a delay
                 setTimeout(() => {
                     if (response.correct) {
@@ -171,7 +171,7 @@ class TriviaGame {
 
         choiceButtons.forEach((button, index) => {
             button.classList.add('disabled');
-            
+
             if (index === selectedIndex) {
                 if (index === correctIndex) {
                     button.classList.add('correct');
@@ -188,12 +188,12 @@ class TriviaGame {
     showAnswerFeedback(isCorrect, correctAnswer) {
         const feedbackElement = document.getElementById('feedback-message');
         const feedbackText = document.getElementById('feedback-text');
-        
+
         if (feedbackElement && feedbackText) {
             feedbackElement.style.display = 'block';
             feedbackElement.className = `feedback-message ${isCorrect ? 'correct' : 'incorrect'}`;
-            feedbackText.textContent = isCorrect ? 
-                '🎉 Correct!' : 
+            feedbackText.textContent = isCorrect ?
+                '🎉 Correct!' :
                 `❌ Incorrect. The answer is: ${correctAnswer}`;
         }
     }
@@ -437,7 +437,7 @@ class TriviaGame {
         const total = this.gameStats ? this.gameStats.total_cards : 0;
 
         const message = `🎉 Game Complete!\n\nFinal Score: ${score}/${total}\nAccuracy: ${accuracy}%\n\nWould you like to play again?`;
-        
+
         if (confirm(message)) {
             this.resetGame();
         }
@@ -522,7 +522,7 @@ class TriviaGame {
 
         notification.style.backgroundColor = colors[type] || colors.info;
         notification.textContent = message;
-        
+
         // Show notification
         notification.style.transform = 'translateX(0)';
 

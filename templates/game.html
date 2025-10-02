@@ -57,12 +57,12 @@
                     <div class="card-footer">
                         <div class="answer-choices" id="answer-choices">
                             {% if current_card and current_card.trivia_question.choices %}
-                                <button class="btn btn-choice choice-a" id="choice-0" data-choice="0">
-                                    A) {{ current_card.trivia_question.choices[0] }}
-                                </button>
-                                <button class="btn btn-choice choice-b" id="choice-1" data-choice="1">
-                                    B) {{ current_card.trivia_question.choices[1] }}
-                                </button>
+                            <button class="btn btn-choice choice-a" id="choice-0" data-choice="0">
+                                A) {{ current_card.trivia_question.choices[0] }}
+                            </button>
+                            <button class="btn btn-choice choice-b" id="choice-1" data-choice="1">
+                                B) {{ current_card.trivia_question.choices[1] }}
+                            </button>
                             {% endif %}
                         </div>
                         <div class="feedback-message" id="feedback-message" style="display: none;">
