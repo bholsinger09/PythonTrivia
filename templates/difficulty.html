@@ -59,170 +59,170 @@
 </div>
 
 <style>
-.page-header {
-    text-align: center;
-    margin-bottom: 3rem;
-    color: white;
-}
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+    }
 
-.page-title {
-    font-size: 3rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-}
-
-.page-subtitle {
-    font-size: 1.2rem;
-    opacity: 0.9;
-}
-
-.difficulty-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-    margin-bottom: 3rem;
-}
-
-.difficulty-card {
-    background: white;
-    border-radius: 16px;
-    padding: 2.5rem;
-    text-align: center;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.difficulty-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: #10b981;
-}
-
-.difficulty-card.difficulty-medium::before {
-    background: #f59e0b;
-}
-
-.difficulty-card.difficulty-hard::before {
-    background: #ef4444;
-}
-
-.difficulty-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
-}
-
-.difficulty-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-}
-
-.difficulty-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1f2937;
-    margin-bottom: 0.5rem;
-}
-
-.difficulty-count {
-    color: #6b7280;
-    margin-bottom: 1rem;
-    font-size: 1rem;
-}
-
-.difficulty-description {
-    margin-bottom: 2rem;
-}
-
-.difficulty-description p {
-    color: #4b5563;
-    font-size: 1rem;
-    line-height: 1.6;
-}
-
-.difficulty-btn {
-    width: 100%;
-}
-
-.tips-section {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
-    padding: 3rem;
-    margin: 3rem 0;
-    text-align: center;
-}
-
-.tips-section h2 {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1f2937;
-    margin-bottom: 2rem;
-}
-
-.tips-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 2rem;
-    margin-top: 2rem;
-}
-
-.tip-item {
-    text-align: left;
-    padding: 1.5rem;
-    background: #f9fafb;
-    border-radius: 12px;
-}
-
-.tip-item h4 {
-    color: #1f2937;
-    margin-bottom: 0.5rem;
-    font-size: 1.1rem;
-    font-weight: 600;
-}
-
-.tip-item p {
-    color: #6b7280;
-    line-height: 1.6;
-    font-size: 0.95rem;
-}
-
-.action-section {
-    text-align: center;
-    padding: 2rem;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
-    margin-top: 2rem;
-}
-
-.action-section .btn {
-    margin: 0 0.5rem;
-}
-
-@media (max-width: 768px) {
     .page-title {
-        font-size: 2rem;
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
     }
-    
+
+    .page-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+
     .difficulty-grid {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
     }
-    
-    .tips-grid {
-        grid-template-columns: 1fr;
+
+    .difficulty-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2.5rem;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
-    
-    .action-section .btn {
-        display: block;
-        margin: 0.5rem 0;
+
+    .difficulty-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: #10b981;
+    }
+
+    .difficulty-card.difficulty-medium::before {
+        background: #f59e0b;
+    }
+
+    .difficulty-card.difficulty-hard::before {
+        background: #ef4444;
+    }
+
+    .difficulty-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+    }
+
+    .difficulty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .difficulty-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+
+    .difficulty-count {
+        color: #6b7280;
+        margin-bottom: 1rem;
+        font-size: 1rem;
+    }
+
+    .difficulty-description {
+        margin-bottom: 2rem;
+    }
+
+    .difficulty-description p {
+        color: #4b5563;
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    .difficulty-btn {
         width: 100%;
     }
-}
+
+    .tips-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 3rem;
+        margin: 3rem 0;
+        text-align: center;
+    }
+
+    .tips-section h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 2rem;
+    }
+
+    .tips-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .tip-item {
+        text-align: left;
+        padding: 1.5rem;
+        background: #f9fafb;
+        border-radius: 12px;
+    }
+
+    .tip-item h4 {
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .tip-item p {
+        color: #6b7280;
+        line-height: 1.6;
+        font-size: 0.95rem;
+    }
+
+    .action-section {
+        text-align: center;
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        margin-top: 2rem;
+    }
+
+    .action-section .btn {
+        margin: 0 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .page-title {
+            font-size: 2rem;
+        }
+
+        .difficulty-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .tips-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .action-section .btn {
+            display: block;
+            margin: 0.5rem 0;
+            width: 100%;
+        }
+    }
 </style>
 {% endblock %}

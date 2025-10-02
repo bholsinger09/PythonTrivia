@@ -20,14 +20,14 @@ class TriviaApp {
 
         // Add loading states to buttons
         this.setupButtonLoading();
-        
+
         // Initialize any global event listeners
         this.setupGlobalListeners();
     }
 
     setupButtonLoading() {
         document.querySelectorAll('.btn').forEach(button => {
-            button.addEventListener('click', function() {
+            button.addEventListener('click', function () {
                 if (!this.disabled) {
                     this.classList.add('loading');
                     setTimeout(() => {
@@ -58,7 +58,7 @@ class TriviaApp {
 
         window.addEventListener('scroll', () => {
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            
+
             if (scrollTop > lastScrollTop && scrollTop > 100) {
                 // Scrolling down
                 navbar.style.transform = 'translateY(-100%)';
@@ -66,7 +66,7 @@ class TriviaApp {
                 // Scrolling up
                 navbar.style.transform = 'translateY(0)';
             }
-            
+
             lastScrollTop = scrollTop;
         });
     }
@@ -107,7 +107,7 @@ class TriviaApp {
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
         notification.textContent = message;
-        
+
         // Style the notification
         Object.assign(notification.style, {
             position: 'fixed',

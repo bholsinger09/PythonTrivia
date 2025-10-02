@@ -5,7 +5,7 @@ class TriviaGame {
         this.gameStats = null;
         this.isFlipped = false;
         this.isLoading = false;
-        
+
         this.init();
     }
 
@@ -25,11 +25,11 @@ class TriviaGame {
         // Answer buttons
         const correctBtn = document.getElementById('correct-btn');
         const incorrectBtn = document.getElementById('incorrect-btn');
-        
+
         if (correctBtn) {
             correctBtn.addEventListener('click', () => this.answerCard(true));
         }
-        
+
         if (incorrectBtn) {
             incorrectBtn.addEventListener('click', () => this.answerCard(false));
         }
@@ -37,11 +37,11 @@ class TriviaGame {
         // Navigation buttons
         const prevBtn = document.getElementById('prev-btn');
         const nextBtn = document.getElementById('next-btn');
-        
+
         if (prevBtn) {
             prevBtn.addEventListener('click', () => this.previousCard());
         }
-        
+
         if (nextBtn) {
             nextBtn.addEventListener('click', () => this.nextCard());
         }
@@ -69,7 +69,7 @@ class TriviaGame {
             // Prevent keyboard actions if loading
             if (this.isLoading) return;
 
-            switch(e.key) {
+            switch (e.key) {
                 case ' ':
                 case 'Enter':
                     e.preventDefault();
@@ -107,11 +107,11 @@ class TriviaGame {
 
     async loadCurrentCard() {
         if (this.isLoading) return;
-        
+
         try {
             this.setLoadingState(true);
             const response = await this.makeApiCall('/api/current-card');
-            
+
             if (response.success) {
                 this.currentCard = response.card;
                 this.gameStats = response.game_stats;
@@ -163,7 +163,7 @@ class TriviaGame {
                 this.currentCard = response.card;
                 this.gameStats = response.game_stats;
                 this.updateUI();
-                
+
                 // Show feedback
                 const message = isCorrect ? 'Correct! 🎉' : 'Incorrect 😔';
                 const type = isCorrect ? 'success' : 'error';
@@ -275,9 +275,9 @@ class TriviaGame {
         }
 
         // Update card content
-        this.updateElement('category-badge', 
+        this.updateElement('category-badge',
             this.currentCard.trivia_question.category.replace('_', ' ').toUpperCase());
-        this.updateElement('difficulty-badge', 
+        this.updateElement('difficulty-badge',
             this.currentCard.trivia_question.difficulty.toUpperCase());
         this.updateElement('question-text', this.currentCard.trivia_question.question);
         this.updateElement('answer-text', this.currentCard.trivia_question.answer);
@@ -335,7 +335,7 @@ class TriviaGame {
     setLoadingState(isLoading) {
         this.isLoading = isLoading;
         const spinner = document.getElementById('loading-spinner');
-        
+
         if (spinner) {
             spinner.style.display = isLoading ? 'block' : 'none';
         }

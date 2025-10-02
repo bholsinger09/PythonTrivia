@@ -29,7 +29,8 @@
     <!-- Progress Bar -->
     <div class="progress-container">
         <div class="progress-bar">
-            <div class="progress-fill" id="progress-fill" style="width: {{ ((game_stats.current_index + 1) / game_stats.total_cards * 100) }}%"></div>
+            <div class="progress-fill" id="progress-fill"
+                style="width: {{ ((game_stats.current_index + 1) / game_stats.total_cards * 100) }}%"></div>
         </div>
     </div>
 
@@ -41,7 +42,8 @@
                 <div class="flip-card-front">
                     <div class="card-header">
                         <span class="category-badge" id="category-badge">
-                            {% if current_card %}{{ current_card.trivia_question.category.value.replace('_', ' ').title() }}{% endif %}
+                            {% if current_card %}{{ current_card.trivia_question.category.value.replace('_', '
+                            ').title() }}{% endif %}
                         </span>
                         <span class="difficulty-badge" id="difficulty-badge">
                             {% if current_card %}{{ current_card.trivia_question.difficulty.value.title() }}{% endif %}
@@ -83,10 +85,11 @@
 
     <!-- Navigation -->
     <div class="navigation-container">
-        <button class="btn btn-outline" id="prev-btn" {% if game_stats.current_index == 0 %}disabled{% endif %}>
+        <button class="btn btn-outline" id="prev-btn" {% if game_stats.current_index==0 %}disabled{% endif %}>
             ← Previous
         </button>
-        <button class="btn btn-outline" id="next-btn" {% if game_stats.current_index >= game_stats.total_cards - 1 %}disabled{% endif %}>
+        <button class="btn btn-outline" id="next-btn" {% if game_stats.current_index>= game_stats.total_cards - 1
+            %}disabled{% endif %}>
             Next →
         </button>
     </div>
