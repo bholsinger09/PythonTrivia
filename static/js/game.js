@@ -13,8 +13,33 @@ class TriviaGame {
 
     init() {
         this.setupEventListeners();
-        this.loadCurrentCard();
+        this.initializeFromDOM(); // Get initial state from server-rendered HTML
         this.setupKeyboardControls();
+    }
+
+    initializeFromDOM() {
+        // Extract game state from the server-rendered HTML instead of making API call
+        const questionElement = document.getElementById('question-text');
+        const currentCardSpan = document.getElementById('current-card');
+        const scoreSpan = document.getElementById('current-score');
+        const accuracySpan = document.getElementById('accuracy-percentage');
+        
+        // Initialize game stats from DOM
+        if (currentCardSpan && scoreSpan && accuracySpan) {
+            const currentIndex = parseInt(currentCardSpan.textContent) - 1; // Convert to 0-based
+            const score = parseInt(scoreSpan.textContent);
+            const percentage = parseFloat(accuracySpan.textContent.replace('%', ''));
+            
+            this.gameStats = {
+                current_index: currentIndex,
+                score: score,
+                percentage: percentage,
+                total_cards: 8 // We know we have 8 questions
+            };
+        }
+        
+        // Don't overwrite the question - it's already correctly rendered by the server
+        console.log('Initialized from DOM - question preserved');
     }
 
     setupEventListeners() {
@@ -324,8 +349,16 @@ class TriviaGame {
 
     updateQuestionText() {
         const questionElement = document.getElementById('question-text');
+        console.log('updateQuestionText called');
+        console.log('questionElement:', questionElement);
+        console.log('this.currentCard:', this.currentCard);
+
         if (questionElement && this.currentCard) {
-            questionElement.textContent = this.currentCard.trivia_question.question;
+            const questionText = this.currentCard.trivia_question.question;
+            console.log('Setting question text to:', questionText);
+            questionElement.textContent = questionText;
+        } else {
+            console.log('Cannot update question text - missing element or card');
         }
     }
 
