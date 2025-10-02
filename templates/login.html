@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Python Trivia Game{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1 class="auth-title">Welcome Back! 🐍</h1>
+            <p class="auth-subtitle">Sign in to track your Python trivia progress</p>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-error">
+            <span class="alert-icon">⚠️</span>
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form class="auth-form" id="loginForm" method="POST">
+            <div class="form-group">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" id="username" name="username" class="form-input" placeholder="Enter your username"
+                    required autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" id="password" name="password" class="form-input"
+                    placeholder="Enter your password" required autocomplete="current-password">
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="remember" name="remember" class="checkbox">
+                    <span class="checkbox-text">Remember me</span>
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">
+                <span class="btn-text">Sign In</span>
+                <span class="btn-loader" style="display: none;">⏳</span>
+            </button>
+        </form>
+
+        <div class="auth-links">
+            <p class="auth-link-text">
+                Don't have an account?
+                <a href="{{ url_for('register') }}" class="auth-link">Sign up here</a>
+            </p>
+            <p class="auth-link-text">
+                <a href="{{ url_for('index') }}" class="auth-link">← Back to Home</a>
+            </p>
+        </div>
+
+        <div class="auth-demo">
+            <p class="demo-text">Demo Account:</p>
+            <p class="demo-credentials">Username: <code>admin</code> | Password: <code>admin123</code></p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .auth-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+    }
+
+    .auth-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        padding: 3rem;
+        width: 100%;
+        max-width: 400px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .auth-title {
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+
+    .auth-subtitle {
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    .alert {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .alert-error {
+        background-color: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+    }
+
+    .auth-form {
+        margin-bottom: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        box-sizing: border-box;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+
+    .checkbox {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #2563eb;
+        transform: translateY(-1px);
+    }
+
+    .btn-full {
+        width: 100%;
+    }
+
+    .auth-links {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .auth-link-text {
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .auth-link {
+        color: #3b82f6;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .auth-link:hover {
+        text-decoration: underline;
+    }
+
+    .auth-demo {
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .demo-text {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-bottom: 0.25rem;
+        font-weight: 500;
+    }
+
+    .demo-credentials {
+        font-size: 0.75rem;
+        color: #374151;
+        margin: 0;
+    }
+
+    .demo-credentials code {
+        background-color: #e5e7eb;
+        padding: 0.125rem 0.25rem;
+        border-radius: 4px;
+        font-family: monospace;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('loginForm').addEventListener('submit', function (e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const btnText = submitBtn.querySelector('.btn-text');
+        const btnLoader = submitBtn.querySelector('.btn-loader');
+
+        btnText.style.display = 'none';
+        btnLoader.style.display = 'inline';
+        submitBtn.disabled = true;
+    });
+</script>
+{% endblock %}

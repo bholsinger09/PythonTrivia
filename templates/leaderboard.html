@@ -1,0 +1,635 @@
+{% extends "base.html" %}
+
+{% block title %}Leaderboard - Python Trivia Game{% endblock %}
+
+{% block content %}
+<div class="leaderboard-container">
+    <div class="leaderboard-header">
+        <h1 class="leaderboard-title">🏆 Leaderboard</h1>
+        <p class="leaderboard-subtitle">See how you stack up against other Python enthusiasts!</p>
+    </div>
+
+    <div class="filters-section">
+        <div class="filters-container">
+            <div class="filter-group">
+                <label for="categoryFilter" class="filter-label">Category:</label>
+                <select id="categoryFilter" class="filter-select">
+                    <option value="">All Categories</option>
+                    <option value="BASICS">Basics</option>
+                    <option value="FUNCTIONS">Functions</option>
+                    <option value="DATA_STRUCTURES">Data Structures</option>
+                    <option value="OOP">Object-Oriented Programming</option>
+                    <option value="LIBRARIES">Libraries</option>
+                    <option value="ADVANCED">Advanced</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="difficultyFilter" class="filter-label">Difficulty:</label>
+                <select id="difficultyFilter" class="filter-select">
+                    <option value="">All Difficulties</option>
+                    <option value="EASY">Easy</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HARD">Hard</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="limitFilter" class="filter-label">Show:</label>
+                <select id="limitFilter" class="filter-select">
+                    <option value="10">Top 10</option>
+                    <option value="25">Top 25</option>
+                    <option value="50">Top 50</option>
+                    <option value="100">Top 100</option>
+                </select>
+            </div>
+
+            <button id="refreshBtn" class="btn btn-secondary">
+                <span class="refresh-icon">🔄</span>
+                Refresh
+            </button>
+        </div>
+    </div>
+
+    <div class="leaderboard-content">
+        <div class="loading-state" id="loadingState">
+            <div class="loading-spinner">⏳</div>
+            <p class="loading-text">Loading leaderboard...</p>
+        </div>
+
+        <div class="leaderboard-table" id="leaderboardTable" style="display: none;">
+            <div class="table-header">
+                <div class="rank-col">Rank</div>
+                <div class="player-col">Player</div>
+                <div class="score-col">Score</div>
+                <div class="accuracy-col">Accuracy</div>
+                <div class="questions-col">Questions</div>
+                <div class="category-col">Category</div>
+                <div class="date-col">Date</div>
+            </div>
+            <div class="table-body" id="tableBody">
+                <!-- Scores will be loaded here -->
+            </div>
+        </div>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-icon">📊</div>
+            <h3 class="empty-title">No scores found</h3>
+            <p class="empty-text">Try adjusting your filters or be the first to set a high score!</p>
+            <a href="/game" class="btn btn-primary">Play Now</a>
+        </div>
+
+        <div class="error-state" id="errorState" style="display: none;">
+            <div class="error-icon">❌</div>
+            <h3 class="error-title">Error loading leaderboard</h3>
+            <p class="error-text">Something went wrong. Please try again.</p>
+            <button id="retryBtn" class="btn btn-primary">Try Again</button>
+        </div>
+    </div>
+
+    {% if current_user and current_user.is_authenticated %}
+    <div class="user-stats-section">
+        <h2 class="section-title">Your Stats</h2>
+        <div class="user-stats-grid">
+            <div class="user-stat">
+                <div class="stat-icon">🎮</div>
+                <div class="stat-value">{{ current_user.total_games_played or 0 }}</div>
+                <div class="stat-label">Games Played</div>
+            </div>
+            <div class="user-stat">
+                <div class="stat-icon">🏆</div>
+                <div class="stat-value">{{ current_user.total_points or 0 }}</div>
+                <div class="stat-label">Total Points</div>
+            </div>
+            <div class="user-stat">
+                <div class="stat-icon">📊</div>
+                <div class="stat-value">
+                    {% if current_user.total_questions_answered > 0 %}
+                    {{ "%.1f"|format((current_user.total_correct_answers / current_user.total_questions_answered) * 100)
+                    }}%
+                    {% else %}
+                    0%
+                    {% endif %}
+                </div>
+                <div class="stat-label">Accuracy</div>
+            </div>
+            <div class="user-stat">
+                <div class="stat-icon">🔥</div>
+                <div class="stat-value">{{ current_user.best_streak or 0 }}</div>
+                <div class="stat-label">Best Streak</div>
+            </div>
+        </div>
+        <div class="user-actions">
+            <a href="/profile" class="btn btn-secondary">View Full Profile</a>
+            <a href="/game" class="btn btn-primary">Play to Improve</a>
+        </div>
+    </div>
+    {% else %}
+    <div class="cta-section">
+        <div class="cta-content">
+            <h2 class="cta-title">Want to compete?</h2>
+            <p class="cta-text">Create an account to track your progress and appear on the leaderboard!</p>
+            <div class="cta-actions">
+                <a href="/register" class="btn btn-primary">Sign Up</a>
+                <a href="/login" class="btn btn-secondary">Login</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .leaderboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .leaderboard-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .leaderboard-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+
+    .leaderboard-subtitle {
+        color: #6b7280;
+        font-size: 1.125rem;
+    }
+
+    .filters-section {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .filters-container {
+        display: flex;
+        gap: 1rem;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        min-width: 150px;
+    }
+
+    .filter-label {
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .filter-select {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        background: white;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.15s ease;
+    }
+
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #2563eb;
+        transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+        background-color: #f3f4f6;
+        color: #374151;
+        border: 1px solid #d1d5db;
+    }
+
+    .btn-secondary:hover {
+        background-color: #e5e7eb;
+    }
+
+    .leaderboard-content {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .loading-state,
+    .empty-state,
+    .error-state {
+        padding: 3rem;
+        text-align: center;
+    }
+
+    .loading-spinner {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .loading-text {
+        color: #6b7280;
+    }
+
+    .empty-icon,
+    .error-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .empty-title,
+    .error-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-text,
+    .error-text {
+        color: #6b7280;
+        margin-bottom: 1.5rem;
+    }
+
+    .leaderboard-table {
+        overflow-x: auto;
+    }
+
+    .table-header {
+        display: grid;
+        grid-template-columns: 60px 1fr 80px 80px 80px 120px 100px;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        background-color: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.875rem;
+    }
+
+    .table-body {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .score-row {
+        display: grid;
+        grid-template-columns: 60px 1fr 80px 80px 80px 120px 100px;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #f3f4f6;
+        align-items: center;
+        transition: background-color 0.15s ease;
+    }
+
+    .score-row:hover {
+        background-color: #f9fafb;
+    }
+
+    .score-row.current-user {
+        background-color: #eff6ff;
+        border-left: 4px solid #3b82f6;
+    }
+
+    .rank-display {
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .rank-display.rank-1 {
+        color: #f59e0b;
+    }
+
+    .rank-display.rank-2 {
+        color: #6b7280;
+    }
+
+    .rank-display.rank-3 {
+        color: #92400e;
+    }
+
+    .player-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .player-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .player-name {
+        font-weight: 500;
+        color: #1f2937;
+    }
+
+    .score-value {
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .accuracy-value {
+        color: #059669;
+        font-weight: 500;
+    }
+
+    .questions-value {
+        color: #6b7280;
+    }
+
+    .category-badge {
+        background: #e0e7ff;
+        color: #3730a3;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-align: center;
+    }
+
+    .date-value {
+        color: #6b7280;
+        font-size: 0.75rem;
+    }
+
+    .user-stats-section {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 1rem;
+    }
+
+    .user-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .user-stat {
+        text-align: center;
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+
+    .stat-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.75rem;
+    }
+
+    .user-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .cta-section {
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        border-radius: 12px;
+        padding: 3rem;
+        text-align: center;
+        color: white;
+    }
+
+    .cta-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .cta-text {
+        font-size: 1.125rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+
+    .cta-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .cta-actions .btn {
+        background: white;
+        color: #3b82f6;
+    }
+
+    .cta-actions .btn:hover {
+        background: #f9fafb;
+    }
+
+    @media (max-width: 768px) {
+        .filters-container {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filter-group {
+            min-width: auto;
+        }
+
+        .table-header,
+        .score-row {
+            grid-template-columns: 40px 1fr 60px 60px;
+            font-size: 0.75rem;
+        }
+
+        .category-col,
+        .questions-col,
+        .date-col {
+            display: none;
+        }
+
+        .user-stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    class LeaderboardManager {
+        constructor() {
+            this.loadingState = document.getElementById('loadingState');
+            this.leaderboardTable = document.getElementById('leaderboardTable');
+            this.emptyState = document.getElementById('emptyState');
+            this.errorState = document.getElementById('errorState');
+            this.tableBody = document.getElementById('tableBody');
+
+            this.categoryFilter = document.getElementById('categoryFilter');
+            this.difficultyFilter = document.getElementById('difficultyFilter');
+            this.limitFilter = document.getElementById('limitFilter');
+            this.refreshBtn = document.getElementById('refreshBtn');
+            this.retryBtn = document.getElementById('retryBtn');
+
+            this.init();
+        }
+
+        init() {
+            this.loadLeaderboard();
+
+            // Event listeners
+            this.categoryFilter.addEventListener('change', () => this.loadLeaderboard());
+            this.difficultyFilter.addEventListener('change', () => this.loadLeaderboard());
+            this.limitFilter.addEventListener('change', () => this.loadLeaderboard());
+            this.refreshBtn.addEventListener('click', () => this.loadLeaderboard());
+            this.retryBtn.addEventListener('click', () => this.loadLeaderboard());
+        }
+
+        showState(state) {
+            this.loadingState.style.display = state === 'loading' ? 'block' : 'none';
+            this.leaderboardTable.style.display = state === 'table' ? 'block' : 'none';
+            this.emptyState.style.display = state === 'empty' ? 'block' : 'none';
+            this.errorState.style.display = state === 'error' ? 'block' : 'none';
+        }
+
+        async loadLeaderboard() {
+            this.showState('loading');
+
+            const params = new URLSearchParams({
+                category: this.categoryFilter.value,
+                difficulty: this.difficultyFilter.value,
+                limit: this.limitFilter.value
+            });
+
+            try {
+                const response = await fetch(`/api/leaderboard?${params}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    this.renderLeaderboard(data.scores);
+                } else {
+                    this.showState('error');
+                }
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+                this.showState('error');
+            }
+        }
+
+        renderLeaderboard(scores) {
+            if (scores.length === 0) {
+                this.showState('empty');
+                return;
+            }
+
+            this.tableBody.innerHTML = scores.map((score, index) => {
+                const rank = index + 1;
+                const isCurrentUser = score.username === '{{ current_user.username if current_user.is_authenticated else "" }}';
+
+                return `
+                <div class="score-row ${isCurrentUser ? 'current-user' : ''}">
+                    <div class="rank-display rank-${rank <= 3 ? rank : 'other'}">#${rank}</div>
+                    <div class="player-info">
+                        <div class="player-avatar">${score.username.charAt(0).toUpperCase()}</div>
+                        <div class="player-name">${this.escapeHtml(score.username)}</div>
+                    </div>
+                    <div class="score-value">${score.score}</div>
+                    <div class="accuracy-value">${score.accuracy.toFixed(1)}%</div>
+                    <div class="questions-value">${score.questions_answered}</div>
+                    <div class="category-badge">${score.category ? this.formatCategory(score.category) : 'Mixed'}</div>
+                    <div class="date-value">${this.formatDate(score.achieved_at)}</div>
+                </div>
+            `;
+            }).join('');
+
+            this.showState('table');
+        }
+
+        formatCategory(category) {
+            return category.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    }
+
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+        new LeaderboardManager();
+    });
+</script>
+{% endblock %}

@@ -23,13 +23,13 @@ class TriviaGame {
         const currentCardSpan = document.getElementById('current-card');
         const scoreSpan = document.getElementById('current-score');
         const accuracySpan = document.getElementById('accuracy-percentage');
-        
+
         // Initialize game stats from DOM
         if (currentCardSpan && scoreSpan && accuracySpan) {
             const currentIndex = parseInt(currentCardSpan.textContent) - 1; // Convert to 0-based
             const score = parseInt(scoreSpan.textContent);
             const percentage = parseFloat(accuracySpan.textContent.replace('%', ''));
-            
+
             this.gameStats = {
                 current_index: currentIndex,
                 score: score,
@@ -37,7 +37,7 @@ class TriviaGame {
                 total_cards: 8 // We know we have 8 questions
             };
         }
-        
+
         // Don't overwrite the question - it's already correctly rendered by the server
         console.log('Initialized from DOM - question preserved');
     }

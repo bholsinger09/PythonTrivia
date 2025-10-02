@@ -18,9 +18,42 @@
                 <a href="/game" class="nav-link">Play Game</a>
                 <a href="/categories" class="nav-link">Categories</a>
                 <a href="/difficulty" class="nav-link">Difficulty</a>
+                <a href="/leaderboard" class="nav-link">Leaderboard</a>
+
+                {% if current_user and current_user.is_authenticated %}
+                <a href="/profile" class="nav-link">Profile</a>
+                <a href="/logout" class="nav-link nav-logout">Logout</a>
+                {% else %}
+                <a href="/login" class="nav-link">Login</a>
+                <a href="/register" class="nav-link nav-register">Sign Up</a>
+                {% endif %}
             </div>
         </div>
     </nav>
+
+    <style>
+        .nav-register {
+            background-color: #3b82f6 !important;
+            color: white !important;
+            padding: 0.5rem 1rem !important;
+            border-radius: 6px !important;
+            margin-left: 0.5rem !important;
+        }
+
+        .nav-register:hover {
+            background-color: #2563eb !important;
+            transform: translateY(-1px);
+        }
+
+        .nav-logout {
+            color: #dc2626 !important;
+        }
+
+        .nav-logout:hover {
+            background-color: #fef2f2 !important;
+            color: #dc2626 !important;
+        }
+    </style>
 
     <main class="main-content">
         {% block content %}{% endblock %}
