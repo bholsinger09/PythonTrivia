@@ -167,7 +167,7 @@ class TriviaGame {
 
     highlightChoice(selectedIndex) {
         const choiceButtons = document.querySelectorAll('.btn-choice');
-        const correctIndex = this.currentCard?.correct_choice_index || 0;
+        const correctIndex = this.currentCard?.trivia_question?.correct_choice_index || 0;
 
         choiceButtons.forEach((button, index) => {
             button.classList.add('disabled');
@@ -325,22 +325,22 @@ class TriviaGame {
     updateQuestionText() {
         const questionElement = document.getElementById('question-text');
         if (questionElement && this.currentCard) {
-            questionElement.textContent = this.currentCard.question;
+            questionElement.textContent = this.currentCard.trivia_question.question;
         }
     }
 
     updateChoices() {
-        if (!this.currentCard?.choices) return;
+        if (!this.currentCard?.trivia_question?.choices) return;
 
         const choice0 = document.getElementById('choice-0');
         const choice1 = document.getElementById('choice-1');
 
-        if (choice0 && this.currentCard.choices[0]) {
-            choice0.innerHTML = `A) ${this.currentCard.choices[0]}`;
+        if (choice0 && this.currentCard.trivia_question.choices[0]) {
+            choice0.innerHTML = `A) ${this.currentCard.trivia_question.choices[0]}`;
         }
 
-        if (choice1 && this.currentCard.choices[1]) {
-            choice1.innerHTML = `B) ${this.currentCard.choices[1]}`;
+        if (choice1 && this.currentCard.trivia_question.choices[1]) {
+            choice1.innerHTML = `B) ${this.currentCard.trivia_question.choices[1]}`;
         }
     }
 
@@ -351,11 +351,11 @@ class TriviaGame {
         const resultText = document.getElementById('result-text');
 
         if (answerElement && this.currentCard) {
-            answerElement.textContent = this.currentCard.answer;
+            answerElement.textContent = this.currentCard.trivia_question.answer;
         }
 
-        if (explanationElement && this.currentCard?.explanation) {
-            explanationElement.innerHTML = `<p><strong>Explanation:</strong> ${this.currentCard.explanation}</p>`;
+        if (explanationElement && this.currentCard?.trivia_question?.explanation) {
+            explanationElement.innerHTML = `<p><strong>Explanation:</strong> ${this.currentCard.trivia_question.explanation}</p>`;
             explanationElement.style.display = 'block';
         } else if (explanationElement) {
             explanationElement.style.display = 'none';
@@ -363,7 +363,7 @@ class TriviaGame {
 
         // Show result indicator
         if (resultIndicator && resultText && this.hasAnswered) {
-            const isCorrect = this.selectedChoice === this.currentCard.correct_choice_index;
+            const isCorrect = this.selectedChoice === this.currentCard.trivia_question.correct_choice_index;
             resultIndicator.className = `result-indicator ${isCorrect ? 'correct' : 'incorrect'}`;
             resultText.textContent = isCorrect ? '✓ Correct' : '✗ Incorrect';
             resultIndicator.style.display = 'inline-block';
