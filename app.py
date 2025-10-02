@@ -103,6 +103,12 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/debug')
+def debug_page():
+    """Debug page to test question display"""
+    return render_template('debug.html')
+
+
 @app.route('/game')
 def game_page():
     """Main game page route"""

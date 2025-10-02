@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <div class="game-container">
+        <div class="card-container">
+            <div class="flip-card">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <div class="card-content">
+                            <h2 class="question-text" id="question-text">
+                                TEST QUESTION: What is Python?
+                            </h2>
+                        </div>
+                        <div class="card-footer">
+                            <div class="answer-choices">
+                                <button class="btn btn-choice" id="choice-0">
+                                    A) A programming language
+                                </button>
+                                <button class="btn btn-choice" id="choice-1">
+                                    B) A type of snake
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log("Page loaded");
+        setTimeout(() => {
+            const questionElement = document.getElementById('question-text');
+            console.log("Question element:", questionElement);
+            console.log("Question text:", questionElement ? questionElement.textContent : "NOT FOUND");
+        }, 1000);
+    </script>
+</body>
+
+</html>
