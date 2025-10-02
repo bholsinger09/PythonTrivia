@@ -148,6 +148,10 @@ class Question(db.Model):
             return 0.0
         return (self.times_correct / self.times_asked) * 100
     
+    def get_accuracy_percentage(self) -> float:
+        """Get accuracy percentage for this question (alias for compatibility)"""
+        return self.get_difficulty_percentage()
+    
     def to_dict(self) -> Dict:
         """Convert question to dictionary"""
         return {

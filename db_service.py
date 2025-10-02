@@ -294,6 +294,14 @@ class UserService:
         return User.query.filter_by(email=email).first()
     
     @staticmethod
+    def authenticate_user(username: str, password: str) -> Optional[User]:
+        """Authenticate user with username and password"""
+        user = UserService.get_user_by_username(username)
+        if user and user.check_password(password):
+            return user
+        return None
+    
+    @staticmethod
     def update_user_stats(user_id: int, game_session: GameSession):
         """Update user statistics after a game"""
         user = User.query.get(user_id)

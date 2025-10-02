@@ -28,8 +28,8 @@ class BaseTestConfig:
         """Get Chrome driver options"""
         options = Options()
         
-        if cls.HEADLESS:
-            options.add_argument("--headless")
+        # Always use headless mode for testing
+        options.add_argument("--headless")
         
         # Additional options for stability
         options.add_argument("--no-sandbox")
@@ -39,19 +39,30 @@ class BaseTestConfig:
         options.add_argument("--disable-extensions")
         options.add_argument("--disable-plugins")
         options.add_argument("--disable-images")
+        options.add_argument("--disable-web-security")
+        options.add_argument("--disable-features=VizDisplayCompositor")
         
         return options
 
     @classmethod
     def create_driver(cls):
-        """Create and configure Chrome driver"""
+        """Create and configure Chrome driver with fallback options"""
         options = cls.get_driver_options()
-        service = Service(ChromeDriverManager().install())
         
-        driver = webdriver.Chrome(service=service, options=options)
+        try:
+            # Try to create driver with webdriver-manager
+            service = Service(ChromeDriverManager().install())
+            driver = webdriver.Chrome(service=service, options=options)
+        except Exception as e:
+            print(f"Failed to create Chrome driver with webdriver-manager: {e}")
+            try:
+                # Fallback to system Chrome
+                driver = webdriver.Chrome(options=options)
+            except Exception as e2:
+                print(f"Failed to create Chrome driver with system Chrome: {e2}")
+                pytest.skip("Chrome browser not available for testing")
+        
         driver.implicitly_wait(cls.IMPLICIT_WAIT)
-        driver.maximize_window()
-        
         return driver
 
 

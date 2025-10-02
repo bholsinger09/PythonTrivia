@@ -245,32 +245,53 @@ def register():
         username = data.get('username', '').strip()
         email = data.get('email', '').strip().lower()
         password = data.get('password', '')
+        confirm_password = data.get('confirm_password', '')
         
         # Enhanced validation
         if not username or not email or not password:
-            return jsonify({'success': False, 'message': 'All fields required'})
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'All fields required'}), 400
+            return render_template('register.html', error='All fields required'), 400
         
         # Username validation
         if len(username) < 3 or len(username) > 20:
-            return jsonify({'success': False, 'message': 'Username must be 3-20 characters'})
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Username must be 3-20 characters'}), 400
+            return render_template('register.html', error='Username must be 3-20 characters'), 400
         
         if not username.replace('_', '').isalnum():
-            return jsonify({'success': False, 'message': 'Username can only contain letters, numbers, and underscores'})
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Username can only contain letters, numbers, and underscores'}), 400
+            return render_template('register.html', error='Username can only contain letters, numbers, and underscores'), 400
         
         # Email validation (basic)
         if '@' not in email or '.' not in email.split('@')[-1]:
-            return jsonify({'success': False, 'message': 'Please enter a valid email address'})
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Please enter a valid email address'}), 400
+            return render_template('register.html', error='Please enter a valid email address'), 400
         
         # Password validation
         if len(password) < 6:
-            return jsonify({'success': False, 'message': 'Password must be at least 6 characters'})
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Password must be at least 6 characters'}), 400
+            return render_template('register.html', error='Password must be at least 6 characters'), 400
+        
+        # Password confirmation check
+        if confirm_password and password != confirm_password:
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Passwords do not match'}), 400
+            return render_template('register.html', error='Passwords do not match'), 400
         
         # Check if user exists
         if UserService.get_user_by_username(username):
-            return jsonify({'success': False, 'message': 'Username already exists'})
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Username already exists'}), 400
+            return render_template('register.html', error='Username already exists'), 400
         
         if UserService.get_user_by_email(email):
-            return jsonify({'success': False, 'message': 'Email already registered'})
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Email already registered'}), 400
+            return render_template('register.html', error='Email already registered'), 400
         
         # Create user
         try:
@@ -283,7 +304,9 @@ def register():
                 return redirect(url_for('game_page'))
         except Exception as e:
             app.logger.error(f"Registration error: {e}")
-            return jsonify({'success': False, 'message': 'Registration failed'})
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Registration failed'}), 500
+            return render_template('register.html', error='Registration failed'), 500
     
     return render_template('register.html')
 
@@ -298,10 +321,14 @@ def login():
         
         # Input validation
         if not username or not password:
-            return jsonify({'success': False, 'message': 'Username and password required'})
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Username and password required'}), 400
+            return render_template('login.html', error='Username and password required'), 400
         
         if len(username) > 20 or len(password) > 255:
-            return jsonify({'success': False, 'message': 'Invalid credentials'})
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Invalid credentials'}), 400
+            return render_template('login.html', error='Invalid credentials'), 400
         
         try:
             user = UserService.get_user_by_username(username)
@@ -315,15 +342,15 @@ def login():
                     return redirect(url_for('game_page'))
             else:
                 if request.is_json:
-                    return jsonify({'success': False, 'message': 'Invalid credentials'})
+                    return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
                 else:
-                    return render_template('login.html', error='Invalid credentials')
+                    return render_template('login.html', error='Invalid credentials'), 401
         except Exception as e:
             app.logger.error(f"Login error: {e}")
             if request.is_json:
-                return jsonify({'success': False, 'message': 'Login failed'})
+                return jsonify({'success': False, 'message': 'Login failed'}), 500
             else:
-                return render_template('login.html', error='Invalid credentials')
+                return render_template('login.html', error='Login failed'), 500
     
     return render_template('login.html')
 
