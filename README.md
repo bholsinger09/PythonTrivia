@@ -66,6 +66,35 @@ A comprehensive Python trivia game built with Flask and tested with Selenium aut
 - **2**: Mark as incorrect (when card is flipped)
 - **R**: Reset game
 
+## 🚀 Deployment
+
+Ready to deploy your trivia game? We've got you covered with multiple deployment options:
+
+### Quick Deploy (One-Click Options)
+
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/bholsinger09/PythonTrivia)
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/python-trivia)
+
+### Manual Deployment
+
+Choose your preferred platform:
+
+- **🔥 Heroku** - Perfect for beginners, free tier available
+- **🚄 Railway** - Modern platform with automatic HTTPS
+- **🎨 Render** - Free tier with built-in CI/CD
+- **🐳 Docker** - Deploy anywhere with container support
+
+**Detailed instructions:** See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment guide.
+
+### Production Environment Variables
+
+```bash
+PORT=5001                    # Port number
+FLASK_ENV=production        # Flask environment
+FLASK_DEBUG=False          # Disable debug mode
+```
+
 ## 🧪 Testing
 
 This project includes comprehensive test automation with Selenium.

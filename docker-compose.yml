@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    volumes:
+      - .:/app
+    command: python app.py
+
+  test:
+    build: .
+    volumes:
+      - .:/app
+    environment:
+      - HEADLESS=true
+    command: pytest tests/ -v
+    depends_on:
+      - web
