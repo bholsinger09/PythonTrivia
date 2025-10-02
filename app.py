@@ -252,4 +252,6 @@ def difficulty():
 if __name__ == '__main__':
     # Load sample questions on startup
     load_sample_questions()
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    # Use PORT from environment (Render provides this) or default to 5001
+    port = int(os.environ.get('PORT', 5001))
+    app.run(debug=False, host='0.0.0.0', port=port)
