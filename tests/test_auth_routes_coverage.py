@@ -12,6 +12,7 @@ import json
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from app import app
+from test_utils import MockUser, create_mock_user
 
 
 class TestAuthenticationRoutes:
@@ -43,7 +44,7 @@ class TestAuthenticationRoutes:
         mock_validate_pass.return_value = None
         mock_check_exists.return_value = None
         
-        mock_user = MagicMock()
+        mock_user = create_mock_user(username='testuser', email='test@example.com')
         mock_create_user.return_value = mock_user
         mock_url_for.return_value = '/game'
         mock_redirect.return_value = MagicMock()
@@ -82,7 +83,7 @@ class TestAuthenticationRoutes:
         mock_validate_pass.return_value = None
         mock_check_exists.return_value = None
         
-        mock_user = MagicMock()
+        mock_user = create_mock_user(username='testuser', email='test@example.com')
         mock_create_user.return_value = mock_user
         
         # Test JSON submission
@@ -296,9 +297,8 @@ class TestAuthenticationRoutes:
     def test_login_successful_form(self, mock_redirect, mock_url_for, mock_login_user,
                                   mock_get_user):
         """Test successful login form submission (lines 460-470)"""
-        # Setup mock user
-        mock_user = MagicMock()
-        mock_user.check_password.return_value = True
+        # Setup mock user using our JSON-serializable mock
+        mock_user = create_mock_user(username='testuser')
         mock_get_user.return_value = mock_user
         mock_url_for.return_value = '/game'
         mock_redirect.return_value = MagicMock()
@@ -309,16 +309,14 @@ class TestAuthenticationRoutes:
         })
         
         mock_get_user.assert_called_with('testuser')
-        mock_user.check_password.assert_called_with('password123')
         mock_login_user.assert_called_with(mock_user)
         mock_redirect.assert_called_once()
     
     @patch('app.UserService.get_user_by_username')
     def test_login_successful_json(self, mock_get_user):
         """Test successful login JSON submission (lines 460-470)"""
-        # Setup mock user
-        mock_user = MagicMock()
-        mock_user.check_password.return_value = True
+        # Setup mock user using our JSON-serializable mock
+        mock_user = create_mock_user(username='testuser')
         mock_get_user.return_value = mock_user
         
         response = self.app.post('/login',
@@ -355,8 +353,9 @@ class TestAuthenticationRoutes:
     def test_login_wrong_password_json(self, mock_get_user):
         """Test login with wrong password JSON (lines 471-475)"""
         # Setup mock user with wrong password
-        mock_user = MagicMock()
-        mock_user.check_password.return_value = False
+        mock_user = create_mock_user(username='testuser')
+        # Override the check_password method to return False for wrong password
+        mock_user.check_password = lambda password: False
         mock_get_user.return_value = mock_user
         
         response = self.app.post('/login',

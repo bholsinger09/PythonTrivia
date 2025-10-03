@@ -11,6 +11,7 @@ import json
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from app import app
+from test_utils import MockUser, MockQuestion, MockGameSession, create_mock_user, create_mock_question, create_mock_session
 
 
 class TestGameAPIRoutes:
@@ -193,31 +194,41 @@ class TestGameAPIRoutes:
                                           mock_answer_service, mock_question, 
                                           mock_get_session, mock_game):
         """Test /api/answer-card with correct answer (lines 691-734)"""
-        # Set up mocks
+        # Set up mocks with JSON-serializable objects
+        mock_user_obj = create_mock_user(user_id=1)
         mock_user.is_authenticated = True
         mock_user.id = 1
+        mock_user.to_dict = mock_user_obj.to_dict
         
-        mock_trivia_question = MagicMock()
-        mock_trivia_question.correct_choice_index = 0
-        mock_trivia_question.question = "Test question?"
-        mock_trivia_question.answer = "Correct answer"
+        mock_trivia_question = create_mock_question(
+            question_id=1,
+            question_text="Test question?",
+            correct_answer="Correct answer"
+        )
         
         mock_card = MagicMock()
         mock_card.trivia_question = mock_trivia_question
         mock_card.is_answered_correctly = True
+        # Add a proper to_dict method that returns serializable data
+        mock_card.to_dict.return_value = {
+            'question': "Test question?",
+            'choices': ["Correct answer", "Wrong answer 1", "Wrong answer 2", "Wrong answer 3"],
+            'is_answered': True,
+            'is_correct': True
+        }
         
         mock_game.get_current_card.return_value = mock_card
         mock_game.answer_current_card = MagicMock()
         mock_game.current_card_index = 0
         mock_game.score = 1
         mock_game.cards = [mock_card]
+        # Add a proper get_score_percentage method that returns a number
+        mock_game.get_score_percentage.return_value = 100.0
         
-        mock_session = MagicMock()
-        mock_session.id = 1
+        mock_session = create_mock_session(session_id=1, user_id=1)
         mock_get_session.return_value = mock_session
         
-        mock_db_question = MagicMock()
-        mock_db_question.id = 1
+        mock_db_question = create_mock_question(question_id=1)
         mock_question.query.filter_by.return_value.first.return_value = mock_db_question
         
         response = self.app.post('/api/answer-card',
@@ -239,11 +250,14 @@ class TestGameAPIRoutes:
     @patch('app.get_or_create_game_session')
     def test_api_answer_card_database_exception(self, mock_get_session, mock_game):
         """Test /api/answer-card with database exception (lines 720-721)"""
-        # Set up mocks
-        mock_trivia_question = MagicMock()
+        # Set up mocks with JSON-serializable objects
+        mock_trivia_question = create_mock_question(
+            question_id=1,
+            question_text="Test question?",
+            correct_answer="Correct answer"
+        )
+        # Override for wrong answer scenario
         mock_trivia_question.correct_choice_index = 1  # Wrong answer
-        mock_trivia_question.question = "Test question?"
-        mock_trivia_question.answer = "Correct answer"
         
         mock_card = MagicMock()
         mock_card.trivia_question = mock_trivia_question

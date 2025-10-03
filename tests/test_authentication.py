@@ -6,6 +6,7 @@ from flask import url_for, session
 from models import db, User
 from db_service import UserService
 from app import app
+from test_utils import MockUser, create_mock_user
 
 
 @pytest.fixture
