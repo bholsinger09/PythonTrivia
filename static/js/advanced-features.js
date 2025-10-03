@@ -657,8 +657,12 @@ class AdvancedFeaturesManager {
 // Initialize when ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        window.advancedFeatures = new AdvancedFeaturesManager();
+        if (!window.advancedFeatures) {
+            window.advancedFeatures = new AdvancedFeaturesManager();
+        }
     });
 } else {
-    window.advancedFeatures = new AdvancedFeaturesManager();
+    if (!window.advancedFeatures) {
+        window.advancedFeatures = new AdvancedFeaturesManager();
+    }
 }

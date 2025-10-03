@@ -249,8 +249,12 @@ document.head.appendChild(style);
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        new MobileNavManager();
+        if (!window.mobileNavManager) {
+            window.mobileNavManager = new MobileNavManager();
+        }
     });
 } else {
-    new MobileNavManager();
+    if (!window.mobileNavManager) {
+        window.mobileNavManager = new MobileNavManager();
+    }
 }

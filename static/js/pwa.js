@@ -15,7 +15,18 @@ class PWAManager {
     async init() {
         try {
             // Register service worker
-            await this.registerServiceWorker();
+            await this.regis// Initialize PWA when DOM is ready (prevent duplicate initialization)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!window.pwaManager) {
+            window.pwaManager = new PWAManager();
+        }
+    });
+} else {
+    if (!window.pwaManager) {
+        window.pwaManager = new PWAManager();
+    }
+}ceWorker();
             
             // Setup install prompt
             this.setupInstallPrompt();
@@ -39,7 +50,14 @@ class PWAManager {
     async registerServiceWorker() {
         if ('serviceWorker' in navigator) {
             try {
-                const registration = await navigator.serviceWorker.register('/static/sw.js');
+                // Try registering from root first, then fallback to static folder
+                let registration;
+                try {
+                    registration = await navigator.serviceWorker.register('/sw.js');
+                } catch (error) {
+                    console.log('Fallback: Registering service worker from /static/');
+                    registration = await navigator.serviceWorker.register('/static/sw.js');
+                }
                 
                 this.serviceWorkerRegistration = registration;
                 
@@ -56,6 +74,7 @@ class PWAManager {
                 
             } catch (error) {
                 console.error('❌ Service Worker registration failed:', error);
+                // Don't throw error, just continue without service worker
             }
         }
     }

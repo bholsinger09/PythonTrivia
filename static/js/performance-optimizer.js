@@ -447,32 +447,10 @@ class PerformanceOptimizer {
     }
     
     setupFontOptimization() {
-        // Preload fonts
-        const fonts = [
-            '/static/fonts/Inter-Regular.woff2',
-            '/static/fonts/Inter-Medium.woff2',
-            '/static/fonts/Inter-Bold.woff2'
-        ];
-        
-        fonts.forEach((font) => {
-            const link = document.createElement('link');
-            link.rel = 'preload';
-            link.href = font;
-            link.as = 'font';
-            link.type = 'font/woff2';
-            link.crossOrigin = 'anonymous';
-            document.head.appendChild(link);
-        });
-        
-        // Font display optimization
+        // Font display optimization - just add CSS rules without preloading files that don't exist
         const style = document.createElement('style');
         style.textContent = `
-            @font-face {
-                font-family: 'Inter';
-                font-display: swap; /* Show fallback font immediately */
-                src: url('/static/fonts/Inter-Regular.woff2') format('woff2');
-                font-weight: 400;
-            }
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         `;
         document.head.appendChild(style);
     }
@@ -552,20 +530,8 @@ class PerformanceOptimizer {
     }
     
     async loadCriticalFonts() {
-        // Use Font Loading API if available
-        if ('fonts' in document) {
-            const font = new FontFace('Inter', 'url(/static/fonts/Inter-Regular.woff2)', {
-                weight: '400',
-                display: 'swap'
-            });
-            
-            try {
-                await font.load();
-                document.fonts.add(font);
-            } catch (error) {
-                console.warn('Font loading failed:', error);
-            }
-        }
+        // Skip font loading since we're using Google Fonts via CSS import
+        console.log('✅ Using Google Fonts via CSS import');
     }
     
     loadNonCriticalResources() {
@@ -823,8 +789,12 @@ class PerformanceOptimizer {
 // Initialize performance optimizer
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        window.performanceOptimizer = new PerformanceOptimizer();
+        if (!window.performanceOptimizer) {
+            window.performanceOptimizer = new PerformanceOptimizer();
+        }
     });
 } else {
-    window.performanceOptimizer = new PerformanceOptimizer();
+    if (!window.performanceOptimizer) {
+        window.performanceOptimizer = new PerformanceOptimizer();
+    }
 }

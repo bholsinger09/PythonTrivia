@@ -836,6 +836,18 @@ def difficulty():
     return render_template('difficulty.html', difficulties=difficulty_data)
 
 
+@app.route('/sw.js')
+def service_worker():
+    """Serve the service worker from root path"""
+    return app.send_static_file('sw.js')
+
+
+@app.route('/manifest.json')
+def manifest():
+    """Serve the PWA manifest"""
+    return app.send_static_file('manifest.json')
+
+
 if __name__ == '__main__':
     # Initialize app when run directly
     initialize_app()
