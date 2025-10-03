@@ -559,14 +559,9 @@ class PerformanceOptimizer {
     }
     
     loadSecondaryJS() {
-        const secondaryJS = [
-            '/static/js/mobile-nav.js',
-            '/static/js/advanced-features.js'
-        ];
-        
-        secondaryJS.forEach((src) => {
-            this.loadScript(src);
-        });
+        // Scripts are already loaded in base.html template
+        // No need to load them dynamically to avoid duplicate variable errors
+        console.log('✅ Secondary JS already loaded via HTML');
     }
     
     loadSecondaryImages() {

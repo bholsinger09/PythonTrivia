@@ -26,8 +26,8 @@ if (document.readyState === 'loading') {
     if (!window.pwaManager) {
         window.pwaManager = new PWAManager();
     }
-}ceWorker();
-            
+}
+
             // Setup install prompt
             this.setupInstallPrompt();
             
