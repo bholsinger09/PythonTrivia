@@ -36,8 +36,8 @@
             </div>
 
             <div class="form-group">
-                <label for="confirmPassword" class="form-label">Confirm Password</label>
-                <input type="password" id="confirmPassword" name="confirmPassword" class="form-input"
+                <label for="confirm_password" class="form-label">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" class="form-input"
                     placeholder="Confirm your password" required autocomplete="new-password">
                 <small class="form-help">Must match your password</small>
             </div>
@@ -303,7 +303,7 @@
         const data = Object.fromEntries(formData.entries());
 
         // Client-side validation
-        if (data.password !== data.confirmPassword) {
+        if (data.password !== data.confirm_password) {
             showMessage('Passwords do not match!', 'error');
             return;
         }

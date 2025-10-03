@@ -14,43 +14,43 @@ class PerformanceOptimizer {
             cumulativeLayoutShift: 0,
             firstInputDelay: 0
         };
-        
+
         this.resourceCache = new Map();
         this.criticalResourcesLoaded = false;
-        
+
         this.init();
     }
-    
+
     async init() {
         try {
             // Setup performance monitoring
             this.setupPerformanceMonitoring();
-            
+
             // Setup lazy loading
             this.setupLazyLoading();
-            
+
             // Setup asset optimization
             this.setupAssetOptimization();
-            
+
             // Setup resource hints
             this.setupResourceHints();
-            
+
             // Setup critical resource loading
             await this.loadCriticalResources();
-            
+
             // Setup performance budgets
             this.setupPerformanceBudgets();
-            
+
             // Setup adaptive loading
             this.setupAdaptiveLoading();
-            
+
             console.log('🚀 Performance optimizer initialized');
         } catch (error) {
             console.error('❌ Performance optimizer initialization failed:', error);
             // Continue without performance optimization features
         }
     }
-    
+
     // Performance Monitoring
     setupPerformanceMonitoring() {
         // Core Web Vitals monitoring
@@ -60,19 +60,19 @@ class PerformanceOptimizer {
             this.observeLargestContentfulPaint();
             this.observeFirstInputDelay();
         }
-        
+
         // Navigation timing
         window.addEventListener('load', () => {
             this.measureNavigationTiming();
         });
-        
+
         // Resource timing
         this.monitorResourceTiming();
-        
+
         // Memory usage (if available)
         this.monitorMemoryUsage();
     }
-    
+
     observePaintMetrics() {
         const observer = new PerformanceObserver((list) => {
             const entries = list.getEntries();
@@ -84,20 +84,20 @@ class PerformanceOptimizer {
                 }
             });
         });
-        
+
         observer.observe({ type: 'paint', buffered: true });
     }
-    
+
     observeLargestContentfulPaint() {
         const observer = new PerformanceObserver((list) => {
             const entries = list.getEntries();
             const lastEntry = entries[entries.length - 1];
             this.performanceMetrics.largestContentfulPaint = lastEntry.startTime;
         });
-        
+
         observer.observe({ type: 'largest-contentful-paint', buffered: true });
     }
-    
+
     observeLayoutShiftMetrics() {
         const observer = new PerformanceObserver((list) => {
             const entries = list.getEntries();
@@ -107,10 +107,10 @@ class PerformanceOptimizer {
                 }
             });
         });
-        
+
         observer.observe({ type: 'layout-shift', buffered: true });
     }
-    
+
     observeFirstInputDelay() {
         const observer = new PerformanceObserver((list) => {
             const entries = list.getEntries();
@@ -118,15 +118,15 @@ class PerformanceOptimizer {
                 this.performanceMetrics.firstInputDelay = entry.processingStart - entry.startTime;
             });
         });
-        
+
         observer.observe({ type: 'first-input', buffered: true });
     }
-    
+
     measureNavigationTiming() {
         const navigation = performance.getEntriesByType('navigation')[0];
         if (navigation) {
             this.performanceMetrics.loadTime = navigation.loadEventEnd - navigation.loadEventStart;
-            
+
             // Log performance metrics
             console.log('📊 Performance Metrics:', {
                 'Load Time': `${Math.round(this.performanceMetrics.loadTime)}ms`,
@@ -136,15 +136,15 @@ class PerformanceOptimizer {
                 'Cumulative Layout Shift': this.performanceMetrics.cumulativeLayoutShift.toFixed(3),
                 'First Input Delay': `${Math.round(this.performanceMetrics.firstInputDelay)}ms`
             });
-            
+
             // Check against thresholds
             this.evaluatePerformance();
         }
     }
-    
+
     evaluatePerformance() {
         const issues = [];
-        
+
         // Core Web Vitals thresholds
         if (this.performanceMetrics.largestContentfulPaint > 2500) {
             issues.push('LCP > 2.5s (poor)');
@@ -158,7 +158,7 @@ class PerformanceOptimizer {
         if (this.performanceMetrics.firstContentfulPaint > 1800) {
             issues.push('FCP > 1.8s (poor)');
         }
-        
+
         if (issues.length > 0) {
             console.warn('⚠️ Performance Issues:', issues);
             this.showPerformanceAlert(issues);
@@ -166,7 +166,7 @@ class PerformanceOptimizer {
             console.log('✅ Good performance metrics');
         }
     }
-    
+
     monitorResourceTiming() {
         const observer = new PerformanceObserver((list) => {
             const entries = list.getEntries();
@@ -175,7 +175,7 @@ class PerformanceOptimizer {
                 if (entry.duration > 1000) {
                     console.warn(`🐌 Slow resource: ${entry.name} (${Math.round(entry.duration)}ms)`);
                 }
-                
+
                 // Cache resource timing data
                 this.resourceCache.set(entry.name, {
                     duration: entry.duration,
@@ -184,23 +184,23 @@ class PerformanceOptimizer {
                 });
             });
         });
-        
+
         observer.observe({ type: 'resource', buffered: true });
     }
-    
+
     monitorMemoryUsage() {
         if ('memory' in performance) {
             setInterval(() => {
                 const memory = performance.memory;
                 const usage = (memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100;
-                
+
                 if (usage > 90) {
                     console.warn(`🧠 High memory usage: ${usage.toFixed(1)}%`);
                 }
             }, 30000); // Check every 30 seconds
         }
     }
-    
+
     // Lazy Loading Implementation
     setupLazyLoading() {
         // Intersection Observer for lazy loading
@@ -217,27 +217,27 @@ class PerformanceOptimizer {
                 rootMargin: '50px' // Start loading 50px before element comes into view
             }
         );
-        
+
         // Observe lazy-loadable elements
         this.observeLazyElements();
-        
+
         // Setup lazy image loading
         this.setupLazyImages();
-        
+
         // Setup lazy component loading
         this.setupLazyComponents();
     }
-    
+
     observeLazyElements() {
         const lazyElements = document.querySelectorAll('[data-lazy]');
         lazyElements.forEach((element) => {
             this.intersectionObserver.observe(element);
         });
     }
-    
+
     setupLazyImages() {
         const lazyImages = document.querySelectorAll('img[data-src]');
-        
+
         if ('loading' in HTMLImageElement.prototype) {
             // Native lazy loading support
             lazyImages.forEach((img) => {
@@ -251,86 +251,86 @@ class PerformanceOptimizer {
             });
         }
     }
-    
+
     setupLazyComponents() {
         // Lazy load components that are not immediately visible
         const lazyComponents = document.querySelectorAll('[data-component]');
-        
+
         lazyComponents.forEach((element) => {
             this.intersectionObserver.observe(element);
         });
     }
-    
+
     loadElement(element) {
         // Load lazy images
         if (element.tagName === 'IMG' && element.dataset.src) {
             element.src = element.dataset.src;
             element.classList.add('loaded');
         }
-        
+
         // Load lazy components
         if (element.dataset.component) {
             this.loadComponent(element, element.dataset.component);
         }
-        
+
         // Load lazy content
         if (element.dataset.lazy) {
             this.loadContent(element, element.dataset.lazy);
         }
     }
-    
+
     async loadComponent(element, componentName) {
         try {
             // Dynamically import component if needed
             const componentModule = await import(`/static/js/components/${componentName}.js`);
             const Component = componentModule.default;
-            
+
             // Initialize component
             new Component(element);
-            
+
             element.classList.add('component-loaded');
         } catch (error) {
             console.warn(`Failed to load component: ${componentName}`, error);
         }
     }
-    
+
     async loadContent(element, contentUrl) {
         try {
             const response = await fetch(contentUrl);
             const content = await response.text();
-            
+
             element.innerHTML = content;
             element.classList.add('content-loaded');
-            
+
             // Initialize any scripts in the loaded content
             this.initializeLoadedScripts(element);
         } catch (error) {
             console.warn(`Failed to load content: ${contentUrl}`, error);
         }
     }
-    
+
     // Asset Optimization
     setupAssetOptimization() {
         // Preload critical resources
         this.preloadCriticalAssets();
-        
+
         // Setup resource bundling
         this.optimizeResourceLoading();
-        
+
         // Setup image optimization
         this.setupImageOptimization();
-        
+
         // Setup font optimization
         this.setupFontOptimization();
     }
-    
+
     preloadCriticalAssets() {
         // Only preload assets that aren't already preloaded in HTML
         const criticalAssets = [
             { href: '/static/css/enhanced-style.css', as: 'style' }
             // app.js and advanced-features.js are already preloaded in base.html
         ];
-        
+
         criticalAssets.forEach((asset) => {
             if (!document.querySelector(`link[href="${asset.href}"][rel="preload"]`)) {
                 const link = document.createElement('link');
@@ -341,60 +341,60 @@ class PerformanceOptimizer {
             }
         });
     }
-    
+
     optimizeResourceLoading() {
         // Bundle small CSS files
         this.bundleSmallResources();
-        
+
         // Setup HTTP/2 push hints
         this.setupPushHints();
-        
+
         // Optimize script loading order
         this.optimizeScriptLoading();
     }
-    
+
     bundleSmallResources() {
         // Identify and bundle small CSS files (simplified implementation)
         const cssLinks = document.querySelectorAll('link[rel="stylesheet"]');
         const smallCssFiles = [];
-        
+
         cssLinks.forEach((link) => {
             if (link.href.includes('small-') || link.href.includes('component-')) {
                 smallCssFiles.push(link.href);
             }
         });
-        
+
         if (smallCssFiles.length > 2) {
             console.log(`📦 Found ${smallCssFiles.length} small CSS files that could be bundled`);
         }
     }
-    
+
     setupPushHints() {
         // Add HTTP/2 server push hints for critical resources not already in HTML
         const criticalResources = [
             '/static/css/enhanced-style.css'
             // app.js is already preloaded in base.html
         ];
-        
+
         criticalResources.forEach((resource) => {
             const link = document.createElement('link');
             link.rel = 'preload';
             link.href = resource;
             link.as = resource.endsWith('.css') ? 'style' : 'script';
-            
+
             // Only add if not already present
             if (!document.querySelector(`link[href="${resource}"][rel="preload"]`)) {
                 document.head.appendChild(link);
             }
         });
     }
-    
+
     optimizeScriptLoading() {
         // Optimize script loading order for better performance
         const scripts = document.querySelectorAll('script[src]');
         const criticalScripts = [];
         const nonCriticalScripts = [];
-        
+
         scripts.forEach((script) => {
             if (script.src.includes('app.js') || script.src.includes('performance-optimizer.js')) {
                 criticalScripts.push(script);
@@ -402,7 +402,7 @@ class PerformanceOptimizer {
                 nonCriticalScripts.push(script);
             }
         });
-        
+
         // Mark non-critical scripts for deferred loading
         nonCriticalScripts.forEach((script) => {
             if (!script.defer && !script.async) {
@@ -410,21 +410,21 @@ class PerformanceOptimizer {
             }
         });
     }
-    
+
     setupImageOptimization() {
         // Setup responsive images
         const images = document.querySelectorAll('img:not([srcset])');
         images.forEach((img) => {
             this.addResponsiveImageSupport(img);
         });
-        
+
         // Setup WebP support detection
         this.detectWebPSupport();
     }
-    
+
     addResponsiveImageSupport(img) {
         if (!img.src) return;
-        
+
         // Generate different sizes (simplified example)
         const baseSrc = img.src;
         const srcset = [
@@ -432,11 +432,11 @@ class PerformanceOptimizer {
             `${baseSrc}?w=640 640w`,
             `${baseSrc}?w=1024 1024w`
         ].join(', ');
-        
+
         img.srcset = srcset;
         img.sizes = '(max-width: 320px) 320px, (max-width: 640px) 640px, 1024px';
     }
-    
+
     detectWebPSupport() {
         const webp = new Image();
         webp.onload = webp.onerror = () => {
@@ -445,7 +445,7 @@ class PerformanceOptimizer {
         };
         webp.src = 'data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA';
     }
-    
+
     setupFontOptimization() {
         // Font display optimization - just add CSS rules without preloading files that don't exist
         const style = document.createElement('style');
@@ -454,7 +454,7 @@ class PerformanceOptimizer {
         `;
         document.head.appendChild(style);
     }
-    
+
     // Resource Hints
     setupResourceHints() {
         // DNS prefetch for external domains
@@ -462,20 +462,20 @@ class PerformanceOptimizer {
             'fonts.googleapis.com',
             'fonts.gstatic.com'
         ];
-        
+
         externalDomains.forEach((domain) => {
             const link = document.createElement('link');
             link.rel = 'dns-prefetch';
             link.href = `//${domain}`;
             document.head.appendChild(link);
         });
-        
+
         // Preconnect to critical origins
         const criticalOrigins = [
             'https://fonts.googleapis.com',
             'https://fonts.gstatic.com'
         ];
-        
+
         criticalOrigins.forEach((origin) => {
             const link = document.createElement('link');
             link.rel = 'preconnect';
@@ -484,7 +484,7 @@ class PerformanceOptimizer {
             document.head.appendChild(link);
         });
     }
-    
+
     // Critical Resource Loading
     async loadCriticalResources() {
         const criticalResources = [
@@ -492,19 +492,19 @@ class PerformanceOptimizer {
             this.loadCriticalJS(),
             this.loadCriticalFonts()
         ];
-        
+
         try {
             await Promise.all(criticalResources);
             this.criticalResourcesLoaded = true;
             console.log('✅ Critical resources loaded');
-            
+
             // Load non-critical resources
             this.loadNonCriticalResources();
         } catch (error) {
             console.error('❌ Failed to load critical resources:', error);
         }
     }
-    
+
     async loadCriticalCSS() {
         // Inline critical CSS for above-the-fold content
         const criticalCSS = `
@@ -514,24 +514,24 @@ class PerformanceOptimizer {
             .main-content { margin-top: 80px; }
             .flip-card { width: 100%; max-width: 500px; height: 400px; }
         `;
-        
+
         const style = document.createElement('style');
         style.textContent = criticalCSS;
         document.head.appendChild(style);
     }
-    
+
     async loadCriticalJS() {
         // Critical JavaScript modules are already loaded in base.html template
         // No need to load them dynamically to avoid duplicate variable errors
         console.log('✅ Critical JS already loaded via HTML');
         return Promise.resolve();
     }
-    
+
     async loadCriticalFonts() {
         // Skip font loading since we're using Google Fonts via CSS import
         console.log('✅ Using Google Fonts via CSS import');
     }
-    
+
     loadNonCriticalResources() {
         // Load non-critical resources after critical ones
         setTimeout(() => {
@@ -540,12 +540,12 @@ class PerformanceOptimizer {
             this.loadSecondaryImages();
         }, 100);
     }
-    
+
     loadSecondaryCSS() {
         const secondaryCSS = [
             '/static/css/advanced-features.css'
         ];
-        
+
         secondaryCSS.forEach((href) => {
             const link = document.createElement('link');
             link.rel = 'stylesheet';
@@ -555,13 +555,13 @@ class PerformanceOptimizer {
             document.head.appendChild(link);
         });
     }
-    
+
     loadSecondaryJS() {
         // Scripts are already loaded in base.html template
         // No need to load them dynamically to avoid duplicate variable errors
         console.log('✅ Secondary JS already loaded via HTML');
     }
-    
+
     loadSecondaryImages() {
         // Load images that are not immediately visible
         const images = document.querySelectorAll('img[data-src]');
@@ -571,24 +571,24 @@ class PerformanceOptimizer {
             }
         });
     }
-    
+
     // Adaptive Loading
     setupAdaptiveLoading() {
         // Detect connection speed
         this.detectConnectionSpeed();
-        
+
         // Adapt loading strategy based on device capabilities
         this.adaptToDeviceCapabilities();
-        
+
         // Setup data saver mode
         this.setupDataSaverMode();
     }
-    
+
     detectConnectionSpeed() {
         if ('connection' in navigator) {
             const connection = navigator.connection;
             const effectiveType = connection.effectiveType;
-            
+
             // Adjust loading strategy based on connection
             switch (effectiveType) {
                 case 'slow-2g':
@@ -603,14 +603,14 @@ class PerformanceOptimizer {
                     this.enableHighBandwidthMode();
                     break;
             }
-            
+
             console.log(`📡 Connection: ${effectiveType}`);
         }
     }
-    
+
     enableLowBandwidthMode() {
         document.documentElement.classList.add('low-bandwidth');
-        
+
         // Reduce image quality
         const images = document.querySelectorAll('img');
         images.forEach((img) => {
@@ -618,50 +618,50 @@ class PerformanceOptimizer {
                 img.src += (img.src.includes('?') ? '&' : '?') + 'quality=60';
             }
         });
-        
+
         // Disable animations
         document.documentElement.classList.add('reduced-motion');
-        
+
         console.log('📱 Low bandwidth mode enabled');
     }
-    
+
     enableMediumBandwidthMode() {
         document.documentElement.classList.add('medium-bandwidth');
         console.log('📱 Medium bandwidth mode enabled');
     }
-    
+
     enableHighBandwidthMode() {
         document.documentElement.classList.add('high-bandwidth');
         console.log('📱 High bandwidth mode enabled');
     }
-    
+
     adaptToDeviceCapabilities() {
         // Detect device memory
         if ('deviceMemory' in navigator) {
             const memory = navigator.deviceMemory;
-            
+
             if (memory < 4) {
                 this.enableLowMemoryMode();
             }
-            
+
             console.log(`🧠 Device memory: ${memory}GB`);
         }
-        
+
         // Detect hardware concurrency
         if ('hardwareConcurrency' in navigator) {
             const cores = navigator.hardwareConcurrency;
-            
+
             if (cores < 4) {
                 this.enableLowPerformanceMode();
             }
-            
+
             console.log(`⚡ CPU cores: ${cores}`);
         }
     }
-    
+
     enableLowMemoryMode() {
         document.documentElement.classList.add('low-memory');
-        
+
         // Reduce cache size
         if (this.resourceCache.size > 50) {
             const entries = Array.from(this.resourceCache.entries());
@@ -669,19 +669,19 @@ class PerformanceOptimizer {
                 this.resourceCache.delete(key);
             });
         }
-        
+
         console.log('🧠 Low memory mode enabled');
     }
-    
+
     enableLowPerformanceMode() {
         document.documentElement.classList.add('low-performance');
-        
+
         // Reduce animation complexity
         document.documentElement.classList.add('reduced-motion');
-        
+
         console.log('⚡ Low performance mode enabled');
     }
-    
+
     setupDataSaverMode() {
         if ('connection' in navigator && 'saveData' in navigator.connection) {
             if (navigator.connection.saveData) {
@@ -689,22 +689,22 @@ class PerformanceOptimizer {
             }
         }
     }
-    
+
     enableDataSaverMode() {
         document.documentElement.classList.add('data-saver');
-        
+
         // Disable non-essential resources
         const nonEssential = document.querySelectorAll('[data-non-essential]');
         nonEssential.forEach((element) => {
             element.style.display = 'none';
         });
-        
+
         // Reduce image quality
         this.enableLowBandwidthMode();
-        
+
         console.log('💾 Data saver mode enabled');
     }
-    
+
     // Performance Budgets
     setupPerformanceBudgets() {
         const budgets = {
@@ -715,28 +715,28 @@ class PerformanceOptimizer {
             firstInputDelay: 100, // 100ms
             totalResourceSize: 2 * 1024 * 1024 // 2MB
         };
-        
+
         // Monitor budgets
         setInterval(() => {
             this.checkPerformanceBudgets(budgets);
         }, 5000);
     }
-    
+
     checkPerformanceBudgets(budgets) {
         const violations = [];
-        
+
         Object.entries(budgets).forEach(([metric, budget]) => {
             const current = this.performanceMetrics[metric];
             if (current && current > budget) {
                 violations.push({ metric, current, budget });
             }
         });
-        
+
         if (violations.length > 0) {
             console.warn('⚠️ Performance budget violations:', violations);
         }
     }
-    
+
     // Utility Methods
     loadScript(src) {
         return new Promise((resolve, reject) => {
@@ -747,7 +747,7 @@ class PerformanceOptimizer {
             document.head.appendChild(script);
         });
     }
-    
+
     isInViewport(element) {
         const rect = element.getBoundingClientRect();
         return (
@@ -757,7 +757,7 @@ class PerformanceOptimizer {
             rect.right <= (window.innerWidth || document.documentElement.clientWidth)
         );
     }
-    
+
     initializeLoadedScripts(container) {
         const scripts = container.querySelectorAll('script');
         scripts.forEach((script) => {
@@ -766,7 +766,7 @@ class PerformanceOptimizer {
             script.parentNode.replaceChild(newScript, script);
         });
     }
-    
+
     showPerformanceAlert(issues) {
         // Show performance issues to developers only
         if (window.location.hostname === 'localhost' || window.location.search.includes('debug=true')) {

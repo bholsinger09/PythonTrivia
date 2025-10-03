@@ -8,7 +8,7 @@ class PWAManager {
         this.installPrompt = null;
         this.isOnline = navigator.onLine;
         this.serviceWorkerRegistration = null;
-        
+
         this.init();
     }
 
@@ -16,19 +16,19 @@ class PWAManager {
         try {
             // Register service worker
             await this.registerServiceWorker();
-            
+
             // Setup install prompt
             this.setupInstallPrompt();
-            
+
             // Setup offline detection
             this.setupOfflineDetection();
-            
+
             // Setup update checking
             this.setupUpdateDetection();
-            
+
             // Add PWA-specific UI elements
             this.addPWAUI();
-            
+
             console.log('📱 PWA Manager initialized successfully');
         } catch (error) {
             console.error('❌ PWA Manager initialization failed:', error);
@@ -47,20 +47,20 @@ class PWAManager {
                     console.log('Fallback: Registering service worker from /static/');
                     registration = await navigator.serviceWorker.register('/static/sw.js');
                 }
-                
+
                 this.serviceWorkerRegistration = registration;
-                
+
                 console.log('✅ Service Worker registered successfully');
-                
+
                 // Listen for updates
                 registration.addEventListener('updatefound', () => {
                     console.log('🔄 Service Worker update found');
                     this.handleServiceWorkerUpdate(registration);
                 });
-                
+
                 // Check for updates immediately
                 registration.update();
-                
+
             } catch (error) {
                 console.error('❌ Service Worker registration failed:', error);
                 // Don't throw error, just continue without service worker
@@ -114,7 +114,7 @@ class PWAManager {
 
     handleServiceWorkerUpdate(registration) {
         const newWorker = registration.installing;
-        
+
         newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                 // New version available
@@ -126,14 +126,14 @@ class PWAManager {
     showInstallButton() {
         // Create or show install button
         let installBtn = document.getElementById('install-app-btn');
-        
+
         if (!installBtn) {
             installBtn = document.createElement('button');
             installBtn.id = 'install-app-btn';
             installBtn.className = 'btn btn-primary install-btn';
             installBtn.innerHTML = '📱 Install App';
             installBtn.title = 'Install Python Trivia as an app';
-            
+
             // Add to navigation or create floating button
             const navbar = document.querySelector('.nav-links');
             if (navbar) {
@@ -145,10 +145,10 @@ class PWAManager {
                 installBtn.style.zIndex = '1000';
                 document.body.appendChild(installBtn);
             }
-            
+
             installBtn.addEventListener('click', () => this.promptInstall());
         }
-        
+
         installBtn.style.display = 'block';
     }
 
@@ -168,14 +168,14 @@ class PWAManager {
         try {
             const result = await this.installPrompt.prompt();
             console.log('Install prompt result:', result.outcome);
-            
+
             if (result.outcome === 'accepted') {
                 this.showNotification('Installing app...', 'success');
             }
-            
+
             this.installPrompt = null;
             this.hideInstallButton();
-            
+
         } catch (error) {
             console.error('Install prompt failed:', error);
             this.showNotification('Installation failed. Please try again.', 'error');
@@ -185,7 +185,7 @@ class PWAManager {
     updateOnlineStatus() {
         // Update UI based on online status
         const statusIndicator = this.getOrCreateStatusIndicator();
-        
+
         if (this.isOnline) {
             statusIndicator.className = 'online-status online';
             statusIndicator.innerHTML = '🌐 Online';
@@ -195,32 +195,32 @@ class PWAManager {
             statusIndicator.innerHTML = '📡 Offline';
             statusIndicator.title = 'Offline mode - cached content only';
         }
-        
+
         // Update page elements based on online status
         this.updatePageForOfflineMode();
     }
 
     getOrCreateStatusIndicator() {
         let indicator = document.getElementById('online-status-indicator');
-        
+
         if (!indicator) {
             indicator = document.createElement('div');
             indicator.id = 'online-status-indicator';
             indicator.className = 'online-status';
-            
+
             // Add to navbar
             const navbar = document.querySelector('.nav-container');
             if (navbar) {
                 navbar.appendChild(indicator);
             }
         }
-        
+
         return indicator;
     }
 
     updatePageForOfflineMode() {
         const offlineElements = document.querySelectorAll('[data-requires-online]');
-        
+
         offlineElements.forEach(element => {
             if (this.isOnline) {
                 element.style.display = '';
@@ -244,14 +244,14 @@ class PWAManager {
         updateBtn.className = 'btn btn-secondary update-btn';
         updateBtn.innerHTML = '🔄 Update Available';
         updateBtn.title = 'Click to update the app';
-        
+
         updateBtn.addEventListener('click', () => {
             if (this.serviceWorkerRegistration && this.serviceWorkerRegistration.waiting) {
                 this.serviceWorkerRegistration.waiting.postMessage({ action: 'skipWaiting' });
                 window.location.reload();
             }
         });
-        
+
         // Add to page
         const navbar = document.querySelector('.nav-links');
         if (navbar) {
@@ -261,7 +261,7 @@ class PWAManager {
 
     showOfflineNotice() {
         let notice = document.getElementById('offline-notice');
-        
+
         if (!notice) {
             notice = document.createElement('div');
             notice.id = 'offline-notice';
@@ -272,10 +272,10 @@ class PWAManager {
                     <button onclick="this.parentElement.parentElement.remove()" class="close-btn">×</button>
                 </div>
             `;
-            
+
             document.body.appendChild(notice);
         }
-        
+
         notice.style.display = 'block';
     }
 
@@ -296,10 +296,10 @@ class PWAManager {
                 <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
             </div>
         `;
-        
+
         // Add to page
         document.body.appendChild(notification);
-        
+
         // Auto remove after 5 seconds
         setTimeout(() => {
             if (notification.parentElement) {
@@ -440,7 +440,7 @@ class PWAManager {
                 }
             }
         `;
-        
+
         document.head.appendChild(style);
     }
 }
