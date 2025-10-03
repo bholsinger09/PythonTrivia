@@ -163,7 +163,9 @@ class TriviaApp {
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.triviaApp = new TriviaApp();
+    if (!window.triviaApp) {
+        window.triviaApp = new TriviaApp();
+    }
 });
 
 // Export for use in other modules
