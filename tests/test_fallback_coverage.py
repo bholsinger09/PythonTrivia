@@ -67,16 +67,12 @@ class TestFallbackQuestions:
         # and should have used the fallback questions
         assert True  # If we get here, the function worked
     
-    @patch('app.TriviaGame')
+    @patch('app.game')  # Mock the global game object
     @patch('app.load_questions_from_db') 
-    def test_game_initialization_with_fallback_questions(self, mock_load_db, mock_game_class):
+    def test_game_initialization_with_fallback_questions(self, mock_load_db, mock_game):
         """Test that game gets initialized with fallback questions when DB fails"""
         # Mock database to fail
         mock_load_db.side_effect = Exception("DB unavailable")
-        
-        # Mock game instance
-        mock_game = MagicMock()
-        mock_game_class.return_value = mock_game
         
         # Initialize game - should use fallback
         initialize_game_with_questions()
@@ -117,13 +113,13 @@ class TestFallbackQuestions:
             correct_choice = question.choices[question.correct_choice_index]
             assert question.answer == correct_choice
     
-    @patch('app.Question')  # Mock the database Question model
-    def test_load_questions_from_db_with_empty_result(self, mock_question):
+    @patch('app.QuestionService.get_questions_by_criteria')  # Mock the service call
+    def test_load_questions_from_db_with_empty_result(self, mock_service):
         """Test load_questions_from_db when database returns empty result"""
-        # Mock empty query result
-        mock_question.query.all.return_value = []
+        # Mock empty service result  
+        mock_service.return_value = []
         
-        # This should still work but return empty list (no fallback needed)
+        # When DB returns empty result, function should return empty list (no exception)
         questions = load_questions_from_db()
         assert questions == []
     

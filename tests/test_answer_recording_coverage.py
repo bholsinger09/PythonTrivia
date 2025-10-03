@@ -23,8 +23,8 @@ class TestAnswerRecordingCoverage(unittest.TestCase):
         # Create patches for database services
         self.patcher_user_service = patch.object(UserService, 'get_user_by_username')
         self.patcher_question_service = patch.object(QuestionService, 'get_question_by_id')
-        self.patcher_session_service = patch.object(GameSessionService, 'get_session_by_id')
-        self.patcher_answer_service = patch.object(AnswerService, 'save_answer')
+        self.patcher_session_service = patch.object(GameSessionService, 'get_session_by_token')
+        self.patcher_answer_service = patch.object(AnswerService, 'record_answer')
         self.patcher_db = patch('app.db')
         
         # Start patches
@@ -37,45 +37,49 @@ class TestAnswerRecordingCoverage(unittest.TestCase):
         # Configure default mocks
         self.mock_db.session.commit.return_value = None
         
+        # Configure AnswerService.record_answer to return a proper Answer-like object
+        mock_answer = MagicMock()
+        mock_answer.id = 1
+        mock_answer.points_earned = 10
+        self.mock_answer_service.return_value = mock_answer
+        
     def tearDown(self):
         """Clean up patches"""
         patch.stopall()
         
     def test_answer_card_post_successful_recording(self):
         """Test successful answer recording to database - covers lines around 693-731"""
-        # Setup session with a question
-        with self.app.session_transaction() as sess:
-            sess['current_question'] = 1
-            sess['game_session_id'] = 123
-            sess['question_start_time'] = 1000.0
+        
+        with patch('app.game') as mock_game, \
+             patch('app.get_or_create_game_session') as mock_session_func, \
+             patch('app.Question') as mock_question_model:
             
-        # Mock question
-        mock_question = MagicMock()
-        mock_question.id = 1
-        mock_question.question = "What is Python?"
-        mock_question.correct_answer = "A programming language"
-        mock_question.answer_a = "A programming language"
-        mock_question.answer_b = "A snake"
-        mock_question.answer_c = "A movie"
-        mock_question.answer_d = "A book"
-        mock_question.category = Category.GENERAL
-        mock_question.difficulty = Difficulty.EASY
-        self.mock_question_service.return_value = mock_question
-        
-        # Mock session
-        mock_session = MagicMock()
-        mock_session.id = 123
-        self.mock_session_service.return_value = mock_session
-        
-        # Mock answer service
-        self.mock_answer_service.return_value = True
-        
-        # Test successful answer recording
-        with patch('time.time', return_value=1001.0):
+            # Mock game state
+            mock_card = MagicMock()
+            mock_card.trivia_question.correct_choice_index = 0
+            mock_card.trivia_question.question = "What is Python?"
+            mock_card.trivia_question.answer = "A programming language"
+            mock_card.to_dict.return_value = {'question': 'What is Python?', 'answer': 'A programming language'}
+            mock_card.is_answered_correctly = True
+            mock_game.get_current_card.return_value = mock_card
+            mock_game.current_card_index = 0
+            mock_game.score = 1
+            mock_game.cards = [mock_card]  # For the list comprehension
+            mock_game.get_score_percentage.return_value = 100.0  # Return a float instead of MagicMock
+            
+            # Mock session
+            mock_session = MagicMock()
+            mock_session.id = 123
+            mock_session_func.return_value = mock_session
+            
+            # Mock question lookup
+            mock_question = MagicMock()
+            mock_question.id = 1
+            mock_question_model.query.filter_by.return_value.first.return_value = mock_question
+            
             response = self.app.post('/api/answer-card',
                 data=json.dumps({
-                    'selected_answer': 'A programming language',
-                    'question_id': 1
+                    'choice_index': 0
                 }),
                 content_type='application/json')
                 
