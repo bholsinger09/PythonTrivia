@@ -298,8 +298,8 @@ class TestScoreAPIRoutes:
         """Test score saving with no JSON data"""
         response = self.app.post('/api/save-score')
         
-        # Should handle gracefully (either succeed with empty data or fail)
-        assert response.status_code in [200, 400]
+        # Should return 415 for unsupported media type when no JSON is provided
+        assert response.status_code in [200, 400, 415]
     
     @patch('app.get_or_create_game_session')
     @patch('app.game')

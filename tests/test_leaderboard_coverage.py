@@ -177,11 +177,12 @@ class TestLeaderboardRoutes:
         """Test API leaderboard with only some filters (lines 513-521)"""
         mock_get_leaderboard.return_value = []
         
-        response = self.app.get('/api/leaderboard?category=BASICS&limit=15')
+        response = self.app.get('/api/leaderboard?category=basics&limit=15')
         assert response.status_code == 200
         
         # Should handle partial filters gracefully
         data = json.loads(response.data)
+        # The response should succeed since we're mocking the service call
         assert data['success'] is True
     
     @patch('app.ScoreService.get_leaderboard')
