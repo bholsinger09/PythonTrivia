@@ -29,8 +29,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Preload critical resources -->
-    <link rel="preload" href="{{ url_for('static', filename='js/app.js') }}?v=2.0" as="script">
-    <link rel="preload" href="{{ url_for('static', filename='js/pwa.js') }}?v=2.0" as="script">
+    <link rel="preload" href="{{ url_for('static', filename='js/app.js') }}" as="script">
+    <link rel="preload" href="{{ url_for('static', filename='js/pwa.js') }}" as="script">
 </head>
 
 <body>
@@ -90,19 +90,19 @@
     </footer>
 
     <!-- Core JavaScript -->
-    <script src="{{ url_for('static', filename='js/app.js') }}?v=2.0"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     
     <!-- Enhanced Mobile Navigation -->
-    <script src="{{ url_for('static', filename='js/mobile-nav.js') }}?v=2.0"></script>
+    <script src="{{ url_for('static', filename='js/mobile-nav.js') }}"></script>
     
     <!-- Performance Optimizer (Load first for monitoring) -->
-    <script src="{{ url_for('static', filename='js/performance-optimizer.js') }}?v=2.0"></script>
+    <script src="{{ url_for('static', filename='js/performance-optimizer.js') }}"></script>
     
     <!-- Advanced Features -->
-    <script src="{{ url_for('static', filename='js/advanced-features.js') }}?v=2.0"></script>
+    <script src="{{ url_for('static', filename='js/advanced-features.js') }}"></script>
     
     <!-- PWA JavaScript -->
-    <script src="{{ url_for('static', filename='js/pwa.js') }}?v=2.0"></script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
     
     {% block scripts %}{% endblock %}
 </body>
