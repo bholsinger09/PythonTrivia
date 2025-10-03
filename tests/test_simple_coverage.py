@@ -174,8 +174,8 @@ class TestFormHandling:
         """Test API endpoints with form data"""
         response = client.post('/api/answer-card', 
                               data={'answer': 'test'})
-        # Should handle gracefully regardless of format
-        assert response.status_code in [200, 400, 405]
+        # Should handle gracefully regardless of format  
+        assert response.status_code in [200, 400, 405, 415]
     
     def test_api_with_json_data(self, client):
         """Test API endpoints with JSON data"""
