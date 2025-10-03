@@ -5,8 +5,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Python Trivia Game{% endblock %}</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="An interactive Python trivia game with flip cards and challenging questions">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="PyTrivia">
+    <meta name="msapplication-TileColor" content="#4f46e5">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192x192.png') }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192x192.png') }}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ url_for('static', filename='icons/icon-512x512.png') }}">
+    
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/enhanced-style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/advanced-features.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="{{ url_for('static', filename='js/app.js') }}" as="script">
+    <link rel="preload" href="{{ url_for('static', filename='js/pwa.js') }}" as="script">
 </head>
 
 <body>
@@ -65,7 +89,21 @@
         </div>
     </footer>
 
+    <!-- Core JavaScript -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    
+    <!-- Enhanced Mobile Navigation -->
+    <script src="{{ url_for('static', filename='js/mobile-nav.js') }}"></script>
+    
+    <!-- Performance Optimizer (Load first for monitoring) -->
+    <script src="{{ url_for('static', filename='js/performance-optimizer.js') }}"></script>
+    
+    <!-- Advanced Features -->
+    <script src="{{ url_for('static', filename='js/advanced-features.js') }}"></script>
+    
+    <!-- PWA JavaScript -->
+    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+    
     {% block scripts %}{% endblock %}
 </body>
 

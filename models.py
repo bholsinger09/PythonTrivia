@@ -38,9 +38,9 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    last_seen = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    last_seen = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    is_active = db.Column(db.Boolean, default=True, index=True)
     
     # User preferences
     preferred_difficulty = db.Column(db.Enum(Difficulty), default=Difficulty.EASY)
@@ -124,7 +124,7 @@ class Question(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     
     # Statistics
-    times_asked = db.Column(db.Integer, default=0)
+    times_asked = db.Column(db.Integer, default=0, index=True)
     times_correct = db.Column(db.Integer, default=0)
     times_incorrect = db.Column(db.Integer, default=0)
     
@@ -244,15 +244,15 @@ class Answer(db.Model):
     __tablename__ = 'answers'
     
     id = db.Column(db.Integer, primary_key=True)
-    game_session_id = db.Column(db.Integer, db.ForeignKey('game_sessions.id'), nullable=False)
-    question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    game_session_id = db.Column(db.Integer, db.ForeignKey('game_sessions.id'), nullable=False, index=True)
+    question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
     
     # Answer details
     selected_choice_index = db.Column(db.Integer, nullable=False)
-    is_correct = db.Column(db.Boolean, nullable=False)
+    is_correct = db.Column(db.Boolean, nullable=False, index=True)
     time_taken = db.Column(db.Float)  # seconds
-    answered_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    answered_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     
     # Points earned for this answer
     points_earned = db.Column(db.Integer, default=0)
@@ -276,20 +276,20 @@ class Score(db.Model):
     __tablename__ = 'scores'
     
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    game_session_id = db.Column(db.Integer, db.ForeignKey('game_sessions.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    game_session_id = db.Column(db.Integer, db.ForeignKey('game_sessions.id'), nullable=False, index=True)
     
-    # Score details
-    score = db.Column(db.Integer, nullable=False)
+    # Score details  
+    score = db.Column(db.Integer, nullable=False, index=True)
     accuracy_percentage = db.Column(db.Float, nullable=False)
     questions_answered = db.Column(db.Integer, nullable=False)
     time_taken = db.Column(db.Float)  # total time in seconds
     streak = db.Column(db.Integer, default=0)
     
     # Metadata
-    category = db.Column(db.Enum(Category))
-    difficulty = db.Column(db.Enum(Difficulty))
-    achieved_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    category = db.Column(db.Enum(Category), index=True)
+    difficulty = db.Column(db.Enum(Difficulty), index=True)
+    achieved_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     
     # For anonymous users
     anonymous_name = db.Column(db.String(50))
