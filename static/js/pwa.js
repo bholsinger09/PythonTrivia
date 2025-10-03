@@ -13,28 +13,33 @@ class PWAManager {
     }
 
     async init() {
-        // Register service worker
-        await this.registerServiceWorker();
-        
-        // Setup install prompt
-        this.setupInstallPrompt();
-        
-        // Setup offline detection
-        this.setupOfflineDetection();
-        
-        // Setup update checking
-        this.setupUpdateDetection();
-        
-        // Add PWA-specific UI elements
-        this.addPWAUI();
+        try {
+            // Register service worker
+            await this.registerServiceWorker();
+            
+            // Setup install prompt
+            this.setupInstallPrompt();
+            
+            // Setup offline detection
+            this.setupOfflineDetection();
+            
+            // Setup update checking
+            this.setupUpdateDetection();
+            
+            // Add PWA-specific UI elements
+            this.addPWAUI();
+            
+            console.log('📱 PWA Manager initialized successfully');
+        } catch (error) {
+            console.error('❌ PWA Manager initialization failed:', error);
+            // PWA features will be disabled but app will still work
+        }
     }
 
     async registerServiceWorker() {
         if ('serviceWorker' in navigator) {
             try {
-                const registration = await navigator.serviceWorker.register('/static/sw.js', {
-                    scope: '/'
-                });
+                const registration = await navigator.serviceWorker.register('/static/sw.js');
                 
                 this.serviceWorkerRegistration = registration;
                 

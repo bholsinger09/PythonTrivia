@@ -22,28 +22,33 @@ class PerformanceOptimizer {
     }
     
     async init() {
-        // Setup performance monitoring
-        this.setupPerformanceMonitoring();
-        
-        // Setup lazy loading
-        this.setupLazyLoading();
-        
-        // Setup asset optimization
-        this.setupAssetOptimization();
-        
-        // Setup resource hints
-        this.setupResourceHints();
-        
-        // Setup critical resource loading
-        await this.loadCriticalResources();
-        
-        // Setup performance budgets
-        this.setupPerformanceBudgets();
-        
-        // Setup adaptive loading
-        this.setupAdaptiveLoading();
-        
-        console.log('🚀 Performance optimizer initialized');
+        try {
+            // Setup performance monitoring
+            this.setupPerformanceMonitoring();
+            
+            // Setup lazy loading
+            this.setupLazyLoading();
+            
+            // Setup asset optimization
+            this.setupAssetOptimization();
+            
+            // Setup resource hints
+            this.setupResourceHints();
+            
+            // Setup critical resource loading
+            await this.loadCriticalResources();
+            
+            // Setup performance budgets
+            this.setupPerformanceBudgets();
+            
+            // Setup adaptive loading
+            this.setupAdaptiveLoading();
+            
+            console.log('🚀 Performance optimizer initialized');
+        } catch (error) {
+            console.error('❌ Performance optimizer initialization failed:', error);
+            // Continue without performance optimization features
+        }
     }
     
     // Performance Monitoring
@@ -346,6 +351,64 @@ class PerformanceOptimizer {
         
         // Optimize script loading order
         this.optimizeScriptLoading();
+    }
+    
+    bundleSmallResources() {
+        // Identify and bundle small CSS files (simplified implementation)
+        const cssLinks = document.querySelectorAll('link[rel="stylesheet"]');
+        const smallCssFiles = [];
+        
+        cssLinks.forEach((link) => {
+            if (link.href.includes('small-') || link.href.includes('component-')) {
+                smallCssFiles.push(link.href);
+            }
+        });
+        
+        if (smallCssFiles.length > 2) {
+            console.log(`📦 Found ${smallCssFiles.length} small CSS files that could be bundled`);
+        }
+    }
+    
+    setupPushHints() {
+        // Add HTTP/2 server push hints for critical resources
+        const criticalResources = [
+            '/static/css/enhanced-style.css',
+            '/static/js/app.js'
+        ];
+        
+        criticalResources.forEach((resource) => {
+            const link = document.createElement('link');
+            link.rel = 'preload';
+            link.href = resource;
+            link.as = resource.endsWith('.css') ? 'style' : 'script';
+            
+            // Only add if not already present
+            if (!document.querySelector(`link[href="${resource}"][rel="preload"]`)) {
+                document.head.appendChild(link);
+            }
+        });
+    }
+    
+    optimizeScriptLoading() {
+        // Optimize script loading order for better performance
+        const scripts = document.querySelectorAll('script[src]');
+        const criticalScripts = [];
+        const nonCriticalScripts = [];
+        
+        scripts.forEach((script) => {
+            if (script.src.includes('app.js') || script.src.includes('performance-optimizer.js')) {
+                criticalScripts.push(script);
+            } else {
+                nonCriticalScripts.push(script);
+            }
+        });
+        
+        // Mark non-critical scripts for deferred loading
+        nonCriticalScripts.forEach((script) => {
+            if (!script.defer && !script.async) {
+                script.defer = true;
+            }
+        });
     }
     
     setupImageOptimization() {
