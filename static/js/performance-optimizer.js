@@ -325,10 +325,10 @@ class PerformanceOptimizer {
     }
     
     preloadCriticalAssets() {
+        // Only preload assets that aren't already preloaded in HTML
         const criticalAssets = [
-            { href: '/static/css/enhanced-style.css', as: 'style' },
-            { href: '/static/js/app.js', as: 'script' },
-            { href: '/static/js/advanced-features.js', as: 'script' }
+            { href: '/static/css/enhanced-style.css', as: 'style' }
+            // app.js and advanced-features.js are already preloaded in base.html
         ];
         
         criticalAssets.forEach((asset) => {
@@ -370,10 +370,10 @@ class PerformanceOptimizer {
     }
     
     setupPushHints() {
-        // Add HTTP/2 server push hints for critical resources
+        // Add HTTP/2 server push hints for critical resources not already in HTML
         const criticalResources = [
-            '/static/css/enhanced-style.css',
-            '/static/js/app.js'
+            '/static/css/enhanced-style.css'
+            // app.js is already preloaded in base.html
         ];
         
         criticalResources.forEach((resource) => {
@@ -521,12 +521,10 @@ class PerformanceOptimizer {
     }
     
     async loadCriticalJS() {
-        // Load critical JavaScript modules
-        const criticalModules = [
-            '/static/js/app.js'
-        ];
-        
-        return Promise.all(criticalModules.map(this.loadScript.bind(this)));
+        // Critical JavaScript modules are already loaded in base.html template
+        // No need to load them dynamically to avoid duplicate variable errors
+        console.log('✅ Critical JS already loaded via HTML');
+        return Promise.resolve();
     }
     
     async loadCriticalFonts() {
