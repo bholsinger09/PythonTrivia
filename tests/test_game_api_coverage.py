@@ -259,12 +259,24 @@ class TestGameAPIRoutes:
         # Override for wrong answer scenario
         mock_trivia_question.correct_choice_index = 1  # Wrong answer
         
+        # Create a proper mock card with to_dict method
         mock_card = MagicMock()
         mock_card.trivia_question = mock_trivia_question
+        mock_card.to_dict.return_value = {
+            'id': 1,
+            'question': 'Test question?',
+            'choices': ['A', 'B', 'C', 'D'],
+            'answer': 'Correct answer',
+            'is_flipped': False,
+            'is_answered_correctly': None
+        }
         
         mock_game.get_current_card.return_value = mock_card
         mock_game.answer_current_card = MagicMock()
         mock_game.score = 0
+        mock_game.current_card_index = 0
+        mock_game.cards = [mock_card]
+        mock_game.get_score_percentage.return_value = 0.0
         
         # Mock database session to raise exception
         mock_get_session.side_effect = Exception("Database error")
@@ -292,27 +304,29 @@ class TestGameUtilityFunctions:
         self.app.testing = True
     
     @patch('app.HAS_LOGIN', False)
-    @patch('app.GameSession')
-    def test_get_or_create_game_session_no_login(self, mock_session_class):
+    @patch('app.GameSessionService')
+    def test_get_or_create_game_session_no_login(self, mock_session_service):
         """Test get_or_create_game_session without login"""
         from app import get_or_create_game_session
         
         # Should create anonymous session
         mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
+        mock_session.session_token = 'test_token'
+        mock_session_service.create_session.return_value = mock_session
+        mock_session_service.get_session_by_token.return_value = None
         
-        with patch('app.db.session') as mock_db_session:
+        # Use Flask request context
+        with app.test_request_context():
             result = get_or_create_game_session()
             
             # Verify session creation
-            mock_session_class.assert_called_once()
-            mock_db_session.add.assert_called_once_with(mock_session)
-            mock_db_session.commit.assert_called_once()
+            mock_session_service.create_session.assert_called_once_with(user_id=None)
+            assert result == mock_session
     
     @patch('app.HAS_LOGIN', True)
     @patch('app.current_user')
-    @patch('app.GameSession')
-    def test_get_or_create_game_session_with_user(self, mock_session_class, mock_user):
+    @patch('app.GameSessionService')
+    def test_get_or_create_game_session_with_user(self, mock_session_service, mock_user):
         """Test get_or_create_game_session with authenticated user"""
         from app import get_or_create_game_session
         
@@ -320,12 +334,14 @@ class TestGameUtilityFunctions:
         mock_user.id = 1
         
         mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
+        mock_session.session_token = 'test_token'
+        mock_session_service.create_session.return_value = mock_session
+        mock_session_service.get_session_by_token.return_value = None
         
-        with patch('app.db.session') as mock_db_session:
+        # Use Flask request context
+        with app.test_request_context():
             result = get_or_create_game_session()
             
             # Verify session creation with user
-            mock_session_class.assert_called_once()
-            mock_db_session.add.assert_called_once_with(mock_session)
-            mock_db_session.commit.assert_called_once()
+            mock_session_service.create_session.assert_called_once_with(user_id=1)
+            assert result == mock_session

@@ -147,8 +147,8 @@ class TestQuestionServiceCoverage:
                     question=f"Question {i}",
                     options=["A", "B", "C", "D"],
                     correct_answer="A",
-                    category=Category.PYTHON_BASICS,
-                    difficulty=Difficulty.BEGINNER
+                    category=Category.BASICS,
+                    difficulty=Difficulty.EASY
                 )
                 questions.append(question)
             
@@ -284,20 +284,20 @@ class TestScoreServiceCoverage:
                 accuracy_percentage=90.0,
                 questions_answered=10,
                 user_id=user.id,
-                category=Category.PYTHON_BASICS,
-                difficulty=Difficulty.BEGINNER
+                category=Category.BASICS,
+                difficulty=Difficulty.EASY
             )
             
             # Test filtered leaderboard
             leaderboard = ScoreService.get_leaderboard(
-                category=Category.PYTHON_BASICS,
-                difficulty=Difficulty.BEGINNER,
+                category=Category.BASICS,
+                difficulty=Difficulty.EASY,
                 limit=10
             )
             
             assert len(leaderboard) >= 1
-            assert leaderboard[0].category == Category.PYTHON_BASICS
-            assert leaderboard[0].difficulty == Difficulty.BEGINNER
+            assert leaderboard[0].category == Category.BASICS
+            assert leaderboard[0].difficulty == Difficulty.EASY
     
     def test_get_user_best_scores(self, test_app):
         """Test getting user's best scores"""
@@ -336,8 +336,8 @@ class TestAnswerServiceCoverage:
                 question="What is Python?",
                 options=["Language", "Snake", "Food", "Tool"],
                 correct_answer="Language",
-                category=Category.PYTHON_BASICS,
-                difficulty=Difficulty.BEGINNER
+                category=Category.BASICS,
+                difficulty=Difficulty.EASY
             )
             db.session.add(question)
             db.session.commit()
@@ -366,7 +366,7 @@ class TestAnswerServiceCoverage:
                 options=["Framework", "Bottle", "Cup", "Container"],
                 correct_answer="Framework",
                 category=Category.WEB_DEVELOPMENT,
-                difficulty=Difficulty.INTERMEDIATE
+                difficulty=Difficulty.MEDIUM
             )
             db.session.add(question)
             db.session.commit()
