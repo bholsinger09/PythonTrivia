@@ -90,19 +90,19 @@
     </footer>
 
     <!-- Core JavaScript -->
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=2.0"></script>
     
     <!-- Enhanced Mobile Navigation -->
-    <script src="{{ url_for('static', filename='js/mobile-nav.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/mobile-nav.js') }}?v=2.0"></script>
     
     <!-- Performance Optimizer (Load first for monitoring) -->
-    <script src="{{ url_for('static', filename='js/performance-optimizer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/performance-optimizer.js') }}?v=2.0"></script>
     
     <!-- Advanced Features -->
-    <script src="{{ url_for('static', filename='js/advanced-features.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/advanced-features.js') }}?v=2.0"></script>
     
     <!-- PWA JavaScript -->
-    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}?v=2.0"></script>
     
     {% block scripts %}{% endblock %}
 </body>

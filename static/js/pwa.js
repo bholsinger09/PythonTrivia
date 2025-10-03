@@ -15,19 +15,8 @@ class PWAManager {
     async init() {
         try {
             // Register service worker
-            await this.regis// Initialize PWA when DOM is ready (prevent duplicate initialization)
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        if (!window.pwaManager) {
-            window.pwaManager = new PWAManager();
-        }
-    });
-} else {
-    if (!window.pwaManager) {
-        window.pwaManager = new PWAManager();
-    }
-}
-
+            await this.registerServiceWorker();
+            
             // Setup install prompt
             this.setupInstallPrompt();
             
@@ -456,11 +445,15 @@ if (document.readyState === 'loading') {
     }
 }
 
-// Initialize PWA when DOM is loaded
+// Initialize PWA when DOM is loaded (prevent duplicate initialization)
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        new PWAManager();
+        if (!window.pwaManager) {
+            window.pwaManager = new PWAManager();
+        }
     });
 } else {
-    new PWAManager();
+    if (!window.pwaManager) {
+        window.pwaManager = new PWAManager();
+    }
 }
