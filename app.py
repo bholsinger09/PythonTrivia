@@ -923,24 +923,7 @@ def manifest():
     return app.send_static_file('manifest.json')
 
 
-if __name__ == '__main__':
-    # Initialize app when run directly
-    initialize_app()
-    
-    # Use PORT from environment (Render provides this) or default to 5001
-    port = int(os.environ.get('PORT', 5001))
-    app.run(debug=False, host='0.0.0.0', port=port)
 
-def backup_user_data() -> bool:
-    """Manually backup user data"""
-    with app.app_context():
-        return user_data_manager.backup_users()
-
-
-def restore_user_data() -> bool:
-    """Manually restore user data"""
-    with app.app_context():
-        return user_data_manager.restore_users()
 @app.route('/admin/database-status')
 def admin_database_status():
     """Simple admin endpoint to check database status in production"""
@@ -967,3 +950,23 @@ def admin_database_status():
         return html
     except Exception as e:
         return f"<html><body><h1>Error</h1><p>{str(e)}</p><p><a href='/game'>Back</a></p></body></html>", 500
+
+
+if __name__ == '__main__':
+    # Initialize app when run directly
+    initialize_app()
+    
+    # Use PORT from environment (Render provides this) or default to 5001
+    port = int(os.environ.get('PORT', 5001))
+    app.run(debug=False, host='0.0.0.0', port=port)
+
+def backup_user_data() -> bool:
+    """Manually backup user data"""
+    with app.app_context():
+        return user_data_manager.backup_users()
+
+
+def restore_user_data() -> bool:
+    """Manually restore user data"""
+    with app.app_context():
+        return user_data_manager.restore_users()
