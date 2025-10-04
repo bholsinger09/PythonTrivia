@@ -995,7 +995,7 @@ def debug_password_test():
             return "<html><body><h1>Password Debug</h1><p>User 'code_monkey' not found</p></body></html>"
         
         # Test common passwords
-        test_passwords = ['password', 'Password', 'code_monkey', 'Code_monkey', '123456', 'admin', 'Myspam#09']
+        test_passwords = ['password', 'Password', 'code_monkey', 'Code_monkey', '123456', 'admin']
         
         html = f"""
         <html>
