@@ -271,13 +271,7 @@ def init_db() -> None:
             if Question.query.count() == 0:
                 print("Seeding database with initial data...")
                 DatabaseSeeder.seed_sample_questions()
-
-            # Log user persistence status
-            user_count = User.query.count()
-            if user_count > 0:
-                print(f"Database initialized with {user_count} existing users preserved")
-            else:
-                print("Database initialized - no existing users found")                
+                
     except Exception as e:
         print(f"Database initialization error: {e}")
 
@@ -930,14 +924,3 @@ if __name__ == '__main__':
     # Use PORT from environment (Render provides this) or default to 5001
     port = int(os.environ.get('PORT', 5001))
     app.run(debug=False, host='0.0.0.0', port=port)
-
-def backup_user_data() -> bool:
-    """Manually backup user data"""
-    with app.app_context():
-        return user_data_manager.backup_users()
-
-
-def restore_user_data() -> bool:
-    """Manually restore user data"""
-    with app.app_context():
-        return user_data_manager.restore_users()

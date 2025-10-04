@@ -8,7 +8,7 @@ from flask import Flask
 from config import Config, DevelopmentConfig, ProductionConfig, TestingConfig
 from models import db, User, Question, GameSession, Answer, Score
 from db_service import DatabaseSeeder
-
+from user_persistence import smart_database_init, user_data_manager
 def create_app(config_class=None):
     """Create Flask app with database configuration"""
     app = Flask(__name__)
@@ -30,7 +30,7 @@ def create_app(config_class=None):
     
     return app
 
-def init_database(drop_existing=False, seed_data=True):
+def init_database(drop_existing=False, seed_data=True, preserve_users=True):
     """Initialize the database"""
     app = create_app()
     

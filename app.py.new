@@ -1,0 +1,296 @@
+"""
+Flask application for Python Trivia Flip Card Game
+
+This module implements a complete trivia game application with:
+- Interactive flip card gameplay
+- User authentication and session management  
+- Database persistence for questions, users, and scores
+- RESTful API endpoints for game operations
+- Responsive web interface
+
+PEP 20 Principles Applied:
+- Beautiful is better than ugly: Clean, organized code structure
+- Explicit is better than implicit: Clear function signatures and return types
+- Simple is better than complex: Modular design with clear separation of concerns
+- Readability counts: Comprehensive docstrings and meaningful variable names
+"""
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, Response
+from typing import Dict, List, Optional, Tuple, Union, Any
+import os
+from datetime import datetime, timezone
+
+# Import both old and new models for compatibility
+from src.models import TriviaGame, TriviaQuestion
+from models import db, User, Question, GameSession, Answer, Score, Category, Difficulty
+from config import DevelopmentConfig, ProductionConfig, TestingConfig
+from db_service import (
+    QuestionService, GameSessionService, AnswerService, 
+    ScoreService, UserService, DatabaseSeeder
+)
+from user_persistence import smart_database_init, user_data_manager
+try:
+    from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+    HAS_LOGIN = True
+except ImportError:
+    HAS_LOGIN = False
+    print("Flask-Login not available, authentication disabled")
+
+# Create Flask app
+app = Flask(__name__)
+
+# Configuration
+env = os.getenv('FLASK_ENV', 'development')
+if env == 'production':
+    app.config.from_object(ProductionConfig)
+elif env == 'testing':
+    app.config.from_object(TestingConfig)
+else:
+    app.config.from_object(DevelopmentConfig)
+
+# Initialize extensions
+db.init_app(app)
+
+if HAS_LOGIN:
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = 'login'
+    
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+else:
+    # Mock current_user for when Flask-Login is not available
+    class MockUser:
+        is_authenticated = False
+        id = None
+    current_user = MockUser()
+
+# Global game instance (for backward compatibility)
+game = TriviaGame()
+
+
+def get_or_create_game_session() -> Optional[GameSession]:
+    """
+    Get or create a game session for the current user or anonymous session.
+    
+    This function implements session management for both authenticated and
+    anonymous users, maintaining game state across requests.
+    
+    Returns:
+        GameSession: Active game session for the current user/session
+        None: If session creation fails
+        
+    PEP 20: "Explicit is better than implicit" - clear return type and behavior
+    """
+    try:
+        session_token = session.get('game_session_token')
+        game_session = None
+        
+        if session_token:
+            game_session = GameSessionService.get_session_by_token(session_token)
+        
+        if not game_session:
+            # Create new session
+            user_id = current_user.id if HAS_LOGIN and current_user.is_authenticated else None
+            game_session = GameSessionService.create_session(user_id=user_id)
+            session['game_session_token'] = game_session.session_token
+        
+        return game_session
+    except Exception as e:
+        print(f"Error managing game session: {e}")
+        return None
+
+
+def load_questions_from_db(
+    categories: Optional[List[Category]] = None,
+    difficulty: Optional[Difficulty] = None,
+    limit: int = 20
+) -> List[TriviaQuestion]:
+    """
+    Load questions from database with optional filtering.
+    
+    Args:
+        categories: List of categories to filter by (optional)
+        difficulty: Difficulty level to filter by (optional)  
+        limit: Maximum number of questions to return (default: 20)
+        
+    Returns:
+        List[TriviaQuestion]: List of trivia questions from database
+        
+    Raises:
+        RuntimeError: If no application context is available
+        
+    PEP 20: "Simple is better than complex" - focused single responsibility
+    """
+    try:
+        # Ensure we're in app context
+        if not app.app_context:
+            raise RuntimeError("No application context")
+            
+        questions = QuestionService.get_questions_by_criteria(
+            categories=categories,
+            difficulty=difficulty,
+            limit=limit
+        )
+        
+        # Convert DB questions to TriviaQuestion objects for compatibility
+        trivia_questions = []
+        for q in questions:
+            trivia_q = TriviaQuestion(
+                question=q.question_text,
+                answer=q.correct_answer,
+                category=q.category,
+                difficulty=q.difficulty,
+                explanation=q.explanation or "",
+                choices=q.get_choices(),
+                correct_choice_index=q.correct_choice_index
+            )
+            trivia_questions.append(trivia_q)
+        
+        return trivia_questions
+    except Exception as e:
+        print(f"Error loading questions from DB: {e}")
+        return load_sample_questions_fallback()
+
+
+def load_sample_questions_fallback():
+    """Load sample trivia questions into the game (fallback for when DB is not available)"""
+    sample_questions = [
+        TriviaQuestion(
+            "What is the output of print(type([]))?",
+            "<class 'list'>",
+            Category.BASICS,
+            Difficulty.EASY,
+            "The type() function returns the type of an object. An empty list [] is of type 'list'.",
+            choices=["<class 'list'>", "<class 'array'>"],
+            correct_choice_index=0
+        ),
+        TriviaQuestion(
+            "Which Python keyword is used to define a function?",
+            "def",
+            Category.FUNCTIONS,
+            Difficulty.EASY,
+            "The 'def' keyword is used to define functions in Python.",
+            choices=["def", "function"],
+            correct_choice_index=0
+        ),
+        TriviaQuestion(
+            "What does PEP stand for in Python?",
+            "Python Enhancement Proposal",
+            Category.BASICS,
+            Difficulty.MEDIUM,
+            "PEP stands for Python Enhancement Proposal, which are design documents for Python.",
+            choices=["Python Enhancement Proposal", "Python Executable Package"],
+            correct_choice_index=0
+        ),
+        TriviaQuestion(
+            "What is the difference between a list and a tuple in Python?",
+            "Lists are mutable, tuples are immutable",
+            Category.DATA_STRUCTURES,
+            Difficulty.MEDIUM,
+            "Lists can be modified after creation (mutable), while tuples cannot be changed (immutable).",
+            choices=["Lists are mutable, tuples are immutable", "Lists are immutable, tuples are mutable"],
+            correct_choice_index=0
+        ),
+        TriviaQuestion(
+            "What is a decorator in Python?",
+            "A function that modifies another function",
+            Category.ADVANCED,
+            Difficulty.HARD,
+            "Decorators are a way to modify or enhance functions without permanently modifying their code.",
+            choices=["A function that modifies another function", "A special type of class"],
+            correct_choice_index=0
+        ),
+        TriviaQuestion(
+            "What does the __init__ method do in a Python class?",
+            "Initializes a new instance of the class",
+            Category.OOP,
+            Difficulty.MEDIUM,
+            "The __init__ method is the constructor that initializes new objects when they are created.",
+            choices=["Initializes a new instance of the class", "Destroys an instance of the class"],
+            correct_choice_index=0
+        ),
+        TriviaQuestion(
+            "Which library is commonly used for data analysis in Python?",
+            "pandas",
+            Category.LIBRARIES,
+            Difficulty.EASY,
+            "Pandas is the most popular library for data manipulation and analysis in Python.",
+            choices=["pandas", "numpy"],
+            correct_choice_index=0
+        ),
+        TriviaQuestion(
+            "What is the Global Interpreter Lock (GIL) in Python?",
+            "A mutex that prevents multiple threads from executing Python code simultaneously",
+            Category.ADVANCED,
+            Difficulty.HARD,
+            "The GIL ensures that only one thread executes Python bytecode at a time, affecting multi-threading performance.",
+            choices=["A mutex that prevents multiple threads from executing Python code simultaneously", "A feature that speeds up multi-threaded programs"],
+            correct_choice_index=0
+        )
+    ]
+    
+    return sample_questions
+
+
+def initialize_game_with_questions() -> None:
+    """
+    Initialize the global game instance with questions from database.
+    
+    Fallback to hardcoded questions if database unavailable.
+    
+    PEP 20: "Errors should never pass silently" - proper exception handling
+    """
+    try:
+        # Try to load from database first
+        questions = load_questions_from_db()
+        for question in questions:
+            game.add_question(question)
+    except Exception as e:
+        print(f"Failed to load from database, using fallback: {e}")
+        # Fallback to hardcoded questions
+        questions = load_sample_questions_fallback()
+        for question in questions:
+            game.add_question(question)
+    
+    game.shuffle_cards()
+
+
+# Database initialization
+def init_db() -> None:
+    """
+    Initialize database tables with user persistence support.
+    
+    PEP 20: "Simple is better than complex" - focused initialization with user preservation
+    """
+    try:
+        with app.app_context():
+            # Use smart initialization that preserves user data
+            smart_database_init(preserve_users=True)
+            
+            # Check if we need to seed data (only questions, not users)
+            if Question.query.count() == 0:
+                print("Seeding database with initial data...")
+                DatabaseSeeder.seed_sample_questions()
+                
+            # Log user persistence status
+            user_count = User.query.count()
+            if user_count > 0:
+                print(f"Database initialized with {user_count} existing users preserved")
+            else:
+                print("Database initialized - no existing users found")
+                
+    except Exception as e:
+        print(f"Database initialization error: {e}")
+
+
+def backup_user_data() -> bool:
+    """Manually backup user data"""
+    with app.app_context():
+        return user_data_manager.backup_users()
+
+
+def restore_user_data() -> bool:
+    """Manually restore user data"""
+    with app.app_context():
+        return user_data_manager.restore_users()
