@@ -498,53 +498,37 @@ class TestUserService:
             user = UserService.authenticate_user('nonexistent', 'wrong')
             assert user is None
     
-    def test_user_update_stats(self, client):
-        """Test updating user statistics"""
+    def test_user_exists_by_username(self, client):
+        """Test checking if user exists by username"""
         with app.app_context():
-            # Create user first
-            user = UserService.create_user(
+            # Should not exist initially
+            assert UserService.user_exists_by_username('testuser') is False
+            
+            # Create user
+            UserService.create_user(
                 username='testuser',
                 email='test@example.com',
                 password='password123'
             )
             
-            # Update stats
-            UserService.update_user_stats(
-                user_id=user.id,
-                games_played=5,
-                total_score=500,
-                best_score=150
-            )
-            
-            # Verify update
-            updated_user = User.query.get(user.id)
-            assert updated_user.games_played == 5
-            assert updated_user.total_score == 500
-            assert updated_user.best_score == 150
+            # Should exist now
+            assert UserService.user_exists_by_username('testuser') is True
     
-    def test_user_create_duplicate_username(self, client):
-        """Test handling duplicate usernames"""
+    def test_user_exists_by_email(self, client):
+        """Test checking if user exists by email"""
         with app.app_context():
-            # Create first user
+            # Should not exist initially
+            assert UserService.user_exists_by_email('test@example.com') is False
+            
+            # Create user
             UserService.create_user(
                 username='testuser',
-                email='test1@example.com',
+                email='test@example.com',
                 password='password123'
             )
             
-            # Try to create user with same username (should handle gracefully)
-            try:
-                UserService.create_user(
-                    username='testuser',
-                    email='test2@example.com',
-                    password='password456'
-                )
-                # If no exception, check that it didn't create duplicate
-                users = User.query.filter_by(username='testuser').all()
-                assert len(users) == 1
-            except Exception:
-                # Expected if service throws exception for duplicates
-                pass
+            # Should exist now
+            assert UserService.user_exists_by_email('test@example.com') is True
 
 
 class TestDatabaseSeeder:

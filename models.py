@@ -309,3 +309,57 @@ class Score(db.Model):
             'username': self.user.username if self.user else self.anonymous_name,
             'user_id': self.user_id
         }
+
+class UserBackup(db.Model):
+    """
+    Deployment-compatible user backup storage
+    Stores user data as JSON in database instead of local files
+    """
+    __tablename__ = 'user_backups'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    backup_name = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    backup_data = db.Column(db.Text, nullable=False)  # JSON string of user data
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    def to_dict(self) -> Dict:
+        """Convert backup to dictionary"""
+        return {
+            'id': self.id,
+            'backup_name': self.backup_name,
+            'backup_data': json.loads(self.backup_data),
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+    
+    @classmethod
+    def save_backup(cls, name: str, user_data: List[Dict]) -> 'UserBackup':
+        """Save user data backup to database"""
+        existing = cls.query.filter_by(backup_name=name).first()
+        if existing:
+            existing.backup_data = json.dumps(user_data)
+            existing.updated_at = datetime.now(timezone.utc)
+            backup = existing
+        else:
+            backup = cls(
+                backup_name=name,
+                backup_data=json.dumps(user_data)
+            )
+            db.session.add(backup)
+        
+        db.session.commit()
+        return backup
+    
+    @classmethod
+    def load_backup(cls, name: str) -> Optional[List[Dict]]:
+        """Load user data backup from database"""
+        backup = cls.query.filter_by(backup_name=name).first()
+        if backup:
+            return json.loads(backup.backup_data)
+        return None
+    
+    @classmethod
+    def list_backups(cls) -> List['UserBackup']:
+        """List all available backups"""
+        return cls.query.order_by(cls.created_at.desc()).all()

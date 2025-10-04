@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 
 # Import both old and new models for compatibility
 from src.models import TriviaGame, TriviaQuestion
-from models import db, User, Question, GameSession, Answer, Score, Category, Difficulty
+from models import db, User, Question, GameSession, Answer, Score, Category, Difficulty, UserBackup
 from config import DevelopmentConfig, ProductionConfig, TestingConfig
 from db_service import (
     QuestionService, GameSessionService, AnswerService, 
