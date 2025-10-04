@@ -952,6 +952,39 @@ def admin_database_status():
         return f"<html><body><h1>Error</h1><p>{str(e)}</p><p><a href='/game'>Back</a></p></body></html>", 500
 
 
+
+@app.route('/debug/routes')
+def debug_routes():
+    """Debug endpoint to check available routes in production"""
+    try:
+        from flask import url_for
+        routes = []
+        for rule in app.url_map.iter_rules():
+            routes.append({
+                'route': rule.rule,
+                'endpoint': rule.endpoint,
+                'methods': list(rule.methods)
+            })
+        
+        html = f"""
+        <html>
+        <head><title>Debug Routes</title></head>
+        <body style="font-family: Arial; padding: 20px;">
+            <h1>Available Routes in Production</h1>
+            <p><strong>Total Routes:</strong> {len(routes)}</p>
+            <h2>All Routes:</h2>
+            <ul>
+            {''.join([f'<li><strong>{r["route"]}</strong> -> {r["endpoint"]} ({r["methods"]})</li>' for r in routes])}
+            </ul>
+            <p><a href="/game">Back to Game</a></p>
+        </body>
+        </html>
+        """
+        return html
+    except Exception as e:
+        return f"<html><body><h1>Debug Error</h1><p>{str(e)}</p></body></html>", 500
+
+
 if __name__ == '__main__':
     # Initialize app when run directly
     initialize_app()
