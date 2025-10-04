@@ -985,6 +985,49 @@ def debug_routes():
         return f"<html><body><h1>Debug Error</h1><p>{str(e)}</p></body></html>", 500
 
 
+
+@app.route('/debug/password-test')
+def debug_password_test():
+    """Debug endpoint to test password verification for code_monkey"""
+    try:
+        user = User.query.filter_by(username='code_monkey').first()
+        if not user:
+            return "<html><body><h1>Password Debug</h1><p>User 'code_monkey' not found</p></body></html>"
+        
+        # Test common passwords
+        test_passwords = ['password', 'Password', 'code_monkey', 'Code_monkey', '123456', 'admin']
+        
+        html = f"""
+        <html>
+        <head><title>Password Debug</title></head>
+        <body style="font-family: Arial; padding: 20px;">
+            <h1>Password Debug - code_monkey</h1>
+            <p><strong>User Found:</strong> {user.username}</p>
+            <p><strong>Email:</strong> {user.email}</p>
+            <p><strong>Password Hash:</strong> {user.password_hash[:50]}...</p>
+            <h2>Password Tests:</h2>
+            <ul>
+        """
+        
+        for test_pwd in test_passwords:
+            try:
+                result = user.check_password(test_pwd)
+                html += f"<li><strong>{test_pwd}</strong>: {'✅ MATCH' if result else '❌ No match'}</li>"
+            except Exception as e:
+                html += f"<li><strong>{test_pwd}</strong>: ❌ Error: {str(e)}</li>"
+        
+        html += """
+            </ul>
+            <p><strong>Try entering the password that shows ✅ MATCH when logging in.</strong></p>
+            <p><a href="/game">Back to Game</a></p>
+        </body>
+        </html>
+        """
+        return html
+    except Exception as e:
+        return f"<html><body><h1>Debug Error</h1><p>{str(e)}</p></body></html>", 500
+
+
 if __name__ == '__main__':
     # Initialize app when run directly
     initialize_app()
