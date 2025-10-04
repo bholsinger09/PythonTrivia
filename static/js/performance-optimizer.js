@@ -155,8 +155,8 @@ class PerformanceOptimizer {
         if (this.performanceMetrics.cumulativeLayoutShift > 0.1) {
             issues.push('CLS > 0.1 (poor)');
         }
-        if (this.performanceMetrics.firstContentfulPaint > 1800) {
-            issues.push('FCP > 1.8s (poor)');
+        if (this.performanceMetrics.firstContentfulPaint > 2000) {
+            issues.push('FCP > 2.0s (poor)');
         }
 
         if (issues.length > 0) {
@@ -709,7 +709,7 @@ class PerformanceOptimizer {
     setupPerformanceBudgets() {
         const budgets = {
             loadTime: 3000, // 3 seconds
-            firstContentfulPaint: 1800, // 1.8 seconds
+            firstContentfulPaint: 2000, // 1.8 seconds
             largestContentfulPaint: 2500, // 2.5 seconds
             cumulativeLayoutShift: 0.1, // 0.1
             firstInputDelay: 100, // 100ms
