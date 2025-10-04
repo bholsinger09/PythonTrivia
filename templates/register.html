@@ -171,6 +171,41 @@
         box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
     }
 
+    /* Password toggle styles */
+    .password-input-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .password-input-container .form-input {
+        padding-right: 3rem; /* Make room for toggle button */
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 0.75rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        transition: color 0.15s ease;
+        z-index: 1;
+    }
+
+    .password-toggle:hover {
+        color: #374151;
+    }
+
+    .toggle-icon {
+        font-size: 1.125rem;
+        user-select: none;
+    }
+
     .form-help {
         display: block;
         font-size: 0.75rem;
@@ -362,8 +397,22 @@
         }
     });
 
+    // Password toggle functionality
+    function togglePassword(fieldId) {
+        const passwordField = document.getElementById(fieldId);
+        const toggleIcon = document.getElementById(fieldId + '-toggle-icon');
+        
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            toggleIcon.textContent = '🙈';
+        } else {
+            passwordField.type = 'password';
+            toggleIcon.textContent = '👁️';
+        }
+    }
+
     // Real-time password confirmation validation
-    document.getElementById('confirmPassword').addEventListener('input', function () {
+    document.getElementById('confirm_password').addEventListener('input', function () {
         const password = document.getElementById('password').value;
         const confirmPassword = this.value;
 

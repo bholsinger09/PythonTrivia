@@ -404,6 +404,13 @@ def register():
         password = data.get('password', '')
         confirm_password = data.get('confirm_password', '')
         
+        # Check if all required fields are empty first
+        if not username and not email and not password:
+            error = 'All fields required'
+            if request.is_json:
+                return jsonify({'success': False, 'message': error}), 400
+            return render_template('register.html', error=error), 400
+        
         # PEP 20: "Simple is better than complex" - use validation helpers
         error = (validate_username(username) or 
                 validate_email(email) or 
