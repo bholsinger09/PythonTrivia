@@ -338,13 +338,12 @@ def validate_email(email: str) -> Optional[str]:
     return None
 
 
-def validate_password(password: str, confirm_password: str = None) -> Optional[str]:
+def validate_password(password: str) -> Optional[str]:
     """
     Validate password according to application rules.
     
     Args:
         password: Password string to validate
-        confirm_password: Optional password confirmation
         
     Returns:
         str: Error message if validation fails, None if valid
@@ -357,7 +356,21 @@ def validate_password(password: str, confirm_password: str = None) -> Optional[s
     if len(password) < 6:
         return 'Password must be at least 6 characters'
     
-    if confirm_password is not None and password != confirm_password:
+    return None
+
+
+def validate_password_confirmation(password: str, confirm_password: str) -> Optional[str]:
+    """
+    Validate password confirmation matches.
+    
+    Args:
+        password: Original password
+        confirm_password: Password confirmation
+        
+    Returns:
+        str: Error message if passwords don't match, None if valid
+    """
+    if confirm_password and password != confirm_password:
         return 'Passwords do not match'
     
     return None
@@ -404,18 +417,17 @@ def register():
         password = data.get('password', '')
         confirm_password = data.get('confirm_password', '')
         
-        # Check if all required fields are empty first
-        if not username and not email and not password:
+        # Validate empty fields first
+        if not all([username, email, password]):
             error = 'All fields required'
-            if request.is_json:
-                return jsonify({'success': False, 'message': error}), 400
-            return render_template('register.html', error=error), 400
-        
-        # PEP 20: "Simple is better than complex" - use validation helpers
-        error = (validate_username(username) or 
-                validate_email(email) or 
-                validate_password(password, confirm_password) or
-                check_user_exists(username, email))
+        else:
+            # PEP 20: "Simple is better than complex" - use validation helpers
+            # Check individual validations before checking existence
+            error = (validate_username(username) or 
+                    validate_email(email) or 
+                    validate_password(password) or
+                    check_user_exists(username, email) or
+                    validate_password_confirmation(password, confirm_password))
         
         if error:
             if request.is_json:
@@ -463,8 +475,8 @@ def login() -> Union[str, Response]:
         
         if len(username) > 20 or len(password) > 255:
             if request.is_json:
-                return jsonify({'success': False, 'message': 'Invalid credentials'}), 400
-            return render_template('login.html', error='Invalid credentials'), 400
+                return jsonify({'success': False, 'message': 'Invalid username or password'}), 400
+            return render_template('login.html', error='Invalid username or password'), 400
         
         try:
             user = UserService.get_user_by_username(username)
@@ -478,9 +490,9 @@ def login() -> Union[str, Response]:
                     return redirect(url_for('game_page'))
             else:
                 if request.is_json:
-                    return jsonify({'success': False, 'message': 'Invalid credentials'}), 401
+                    return jsonify({'success': False, 'message': 'Invalid username or password'}), 400
                 else:
-                    return render_template('login.html', error='Invalid credentials'), 401
+                    return render_template('login.html', error='Invalid username or password'), 400
         except Exception as e:
             app.logger.error(f"Login error: {e}")
             if request.is_json:
@@ -652,9 +664,13 @@ def game_page() -> str:
                          })
 
 
-@app.route('/api/current-card')
+@app.route('/api/current-card', methods=['GET', 'POST'])
 def get_current_card():
     """API endpoint to get current card data"""
+    if request.method == 'POST':
+        # POST method not supported for this endpoint, return 400
+        return jsonify({'error': 'POST method not supported for this endpoint'}), 400
+    
     current_card = game.get_current_card()
     if current_card:
         return jsonify({
@@ -841,6 +857,52 @@ def difficulty():
             'count': len(diff_cards)
         }
     return render_template('difficulty.html', difficulties=difficulty_data)
+
+
+@app.route('/api/start-game', methods=['GET', 'POST'])
+def start_game_api():
+    """
+    API endpoint to start a new game with optional filters
+    
+    Returns:
+        JSON: Game token and success status
+        
+    GET: Start game with all questions
+    POST: Start game with category/difficulty filters
+    """
+    try:
+        if request.method == 'POST':
+            data = request.get_json() if request.is_json else request.form
+            categories_filter = data.get('categories', [])
+            difficulty_filter = data.get('difficulty')
+            
+            # Validate categories
+            if categories_filter:
+                valid_categories = [cat.value for cat in Category]
+                for cat in categories_filter:
+                    if cat.upper() not in [c.upper() for c in valid_categories]:
+                        return jsonify({'error': f'Invalid category: {cat}'}), 400
+            
+            # Validate difficulty
+            if difficulty_filter:
+                valid_difficulties = [diff.value for diff in Difficulty]
+                if difficulty_filter.lower() not in [d.lower() for d in valid_difficulties]:
+                    return jsonify({'error': f'Invalid difficulty: {difficulty_filter}'}), 400
+        
+        # Get or create game session
+        game_session = get_or_create_game_session()
+        if not game_session:
+            return jsonify({'error': 'Failed to create game session'}), 500
+        
+        # Return the game token
+        return jsonify({
+            'game_token': game_session.session_token,
+            'success': True
+        }), 200
+        
+    except Exception as e:
+        app.logger.error(f"Start game API error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
 
 
 @app.route('/sw.js')
