@@ -941,3 +941,85 @@ def restore_user_data() -> bool:
     """Manually restore user data"""
     with app.app_context():
         return user_data_manager.restore_users()
+@app.route('/admin/database-status')
+def admin_database_status():
+    """
+    Simple admin endpoint to check database status in production
+    Shows users and backup information
+    """
+    try:
+        # Get current users
+        users = User.query.all()
+        user_list = []
+        for user in users:
+            user_list.append({
+                'username': user.username,
+                'email': user.email,
+                'created_at': user.created_at.isoformat(),
+                'games_played': user.total_games_played,
+                'points': user.total_points
+            })
+        
+        # Get backup status
+        from user_persistence import get_user_backup_status
+        backup_status = get_user_backup_status()
+        
+        # Get all backups
+        all_backups = user_data_manager.list_backups()
+        
+        return f"""
+        <html>
+        <head>
+            <title>Database Status - Python Trivia</title>
+            <style>
+                body {{ font-family: 'Inter', Arial, sans-serif; padding: 20px; background: #f5f7fa; }}
+                .container {{ max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+                .status {{ background: #e7f5e7; padding: 10px; border-radius: 5px; margin: 10px 0; }}
+                .user {{ background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; border-left: 4px solid #007bff; }}
+                .backup {{ background: #fff3cd; padding: 10px; margin: 5px 0; border-radius: 5px; border-left: 4px solid #ffc107; }}
+                h1, h2 {{ color: #333; }}
+                .timestamp {{ color: #666; font-size: 0.9em; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🗄️ Database Status - Python Trivia</h1>
+                <div class="timestamp">Last checked: {datetime.now(timezone.utc).isoformat()}</div>
+                
+                <div class="status">
+                    <strong>✅ Database Connected</strong><br>
+                    Total Users: {len(user_list)}<br>
+                    Storage Type: Database (Deployment Compatible)<br>
+                    Total Backups: {backup_status.get('total_backups', 0)}
+                </div>
+                
+                <h2>👥 Registered Users ({len(user_list)})</h2>
+                {''.join([f'<div class="user"><strong>{user["username"]}</strong> ({user["email"]})<br>Created: {user["created_at"]}<br>Games: {user["games_played"]}, Points: {user["points"]}</div>' for user in user_list]) if user_list else '<p>No users found</p>'}
+                
+                <h2>💾 Backup Status</h2>
+                <div class="backup">
+                    <strong>Total Backups:</strong> {backup_status.get('total_backups', 0)}<br>
+                    <strong>Has Default Backup:</strong> {backup_status.get('has_backup', False)}<br>
+                    <strong>Storage Type:</strong> {backup_status.get('storage_type', 'database')}
+                </div>
+                
+                <h2>🔧 All Backups</h2>
+                {''.join([f'<div class="backup"><strong>{backup["backup_name"]}</strong><br>Users: {backup["user_count"]}<br>Created: {backup["created_at"]}</div>' for backup in all_backups]) if all_backups else '<p>No backups found</p>'}
+                
+                <p><a href="/game">← Back to Game</a> | <a href="/">← Home</a></p>
+            </div>
+        </body>
+        </html>
+        """
+        
+    except Exception as e:
+        return f"""
+        <html>
+        <head><title>Database Error</title></head>
+        <body style="font-family: Arial, sans-serif; padding: 20px;">
+            <h1>❌ Database Error</h1>
+            <p>Error checking database status: {str(e)}</p>
+            <p><a href="/game">← Back to Game</a></p>
+        </body>
+        </html>
+        """, 500
