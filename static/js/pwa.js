@@ -44,7 +44,7 @@ class PWAManager {
                 try {
                     registration = await navigator.serviceWorker.register('/sw.js');
                 } catch (error) {
-                    console.log('Fallback: Registering service worker from /static/');
+                    console.warn('Fallback: Registering service worker from /static/');
                     registration = await navigator.serviceWorker.register('/static/sw.js');
                 }
 
