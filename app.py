@@ -922,7 +922,9 @@ def manifest():
 
 @app.route("/test-route")
 def test_route():
-    return "Test route is working"@app.route("/create-user-simple")
+    return "Test route is working"
+
+@app.route("/create-user-simple")
 def create_user_simple():
     """Simple route to create code_monkey user"""
     try:
