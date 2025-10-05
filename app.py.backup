@@ -47,7 +47,10 @@ elif env == 'testing':
 else:
     app.config.from_object(DevelopmentConfig)
 
-# Initialize extensions
+
+# Enable template auto-reload for development
+if env != 'production':
+    app.config['TEMPLATES_AUTO_RELOAD'] = True# Initialize extensions
 db.init_app(app)
 
 if HAS_LOGIN:
@@ -917,6 +920,21 @@ def manifest():
     return app.send_static_file('manifest.json')
 
 
+@app.route("/create-user-simple")
+def create_user_simple():
+    """Simple route to create code_monkey user"""
+    try:
+        from models import User
+        existing = User.query.filter_by(username="code_monkey").first()
+        if existing:
+            return "User already exists"
+        user = User(username="code_monkey", email="test@test.com")
+        user.set_password("password123")
+        db.session.add(user)
+        db.session.commit()
+        return "User created: code_monkey / password123"
+    except Exception as e:
+        return f"Error: {e}"
 if __name__ == '__main__':
     # Initialize app when run directly
     initialize_app()
