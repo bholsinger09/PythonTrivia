@@ -29,7 +29,7 @@ class PWAManager {
             // Add PWA-specific UI elements
             this.addPWAUI();
 
-            console.log('📱 PWA Manager initialized successfully');
+            // console.log('📱 PWA Manager initialized successfully');
         } catch (error) {
             console.error('❌ PWA Manager initialization failed:', error);
             // PWA features will be disabled but app will still work
@@ -50,7 +50,7 @@ class PWAManager {
 
                 this.serviceWorkerRegistration = registration;
 
-                console.log('✅ Service Worker registered successfully');
+                // console.log('✅ Service Worker registered successfully');
 
                 // Listen for updates
                 registration.addEventListener('updatefound', () => {

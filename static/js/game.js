@@ -39,7 +39,7 @@ class TriviaGame {
         }
 
         // Don't overwrite the question - it's already correctly rendered by the server
-        console.log('Initialized from DOM - question preserved');
+        // console.log('Initialized from DOM - question preserved');
     }
 
     setupEventListeners() {

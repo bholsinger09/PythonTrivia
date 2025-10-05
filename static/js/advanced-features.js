@@ -40,7 +40,7 @@ class AdvancedFeaturesManager {
         // Setup performance monitoring
         this.setupPerformanceMonitoring();
 
-        console.log('✨ Advanced features initialized');
+        // console.log('✨ Advanced features initialized');
     }
 
     // Dark Mode Implementation
@@ -564,7 +564,7 @@ class AdvancedFeaturesManager {
             if (performance.getEntriesByType) {
                 const navigation = performance.getEntriesByType('navigation')[0];
                 if (navigation) {
-                    console.log(`⚡ Page loaded in ${Math.round(navigation.loadEventEnd)}ms`);
+                    // console.log(`⚡ Page loaded in ${Math.round(navigation.loadEventEnd)}ms`);
                 }
             }
         });
