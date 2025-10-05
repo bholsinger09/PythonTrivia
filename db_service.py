@@ -246,10 +246,13 @@ class ScoreService:
         db.session.commit()
         
         # Invalidate leaderboard cache when new score is saved
-        invalidate_leaderboard_cache()        return score_record
+        invalidate_leaderboard_cache()
+        
+        return score_record
     
     @staticmethod
-    @cached_leaderboard()    def get_leaderboard(
+    @cached_leaderboard()
+    def get_leaderboard(
         category: Category = None,
         difficulty: Difficulty = None,
         limit: int = 10
