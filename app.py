@@ -920,54 +920,6 @@ def manifest():
     return app.send_static_file('manifest.json')
 
 
-@app.route("/fix-password-emergency")
-def fix_password_emergency():
-
-@app.route("/create-user-emergency")
-def create_user_emergency():
-    """Emergency route to create code_monkey user in production - REMOVE AFTER USE"""
-    try:
-        from models import User
-        
-        # Check if user already exists
-        existing_user = User.query.filter_by(username="code_monkey").first()
-        if existing_user:
-            return "❌ User code_monkey already exists", 400
-        
-        # Create new user
-        new_user = User(
-            username="code_monkey",
-            email="bholsinger@gmail.com"
-        )
-        new_user.set_password("password123")
-        
-        db.session.add(new_user)
-        db.session.commit()
-        
-        # Verify the user was created
-        created_user = User.query.filter_by(username="code_monkey").first()
-        password_works = created_user.check_password("password123") if created_user else False
-        
-        return f"""
-        <h2>User Creation Results</h2>
-        <p>✅ Created user: code_monkey (ID: {created_user.id if created_user else "FAILED"})</p>
-        <p>✅ Email: bholsinger@gmail.com</p>
-        <p>✅ Password: password123</p>
-        <p>✅ Password format: bcrypt</p>
-        <p>✅ Password test: {"PASSED" if password_works else "FAILED"}</p>
-        <p><strong>You can now login with username: code_monkey, password: password123</strong></p>
-        <p><em>IMPORTANT: Remove this route from app.py after use!</em></p>
-        """
-        
-    except Exception as e:
-        db.session.rollback()
-        return f"❌ Error creating user: {str(e)}", 500
-    """Emergency route to fix code_monkey password - REMOVE AFTER USE"""
-    try:
-        from models import User
-        
-        # Find code_monkey user
-        user = User.query.filter_by(username="code_monkey").first()
         
         if not user:
             return "❌ User 'code_monkey' not found", 404
@@ -1000,6 +952,78 @@ def create_user_emergency():
         
     except Exception as e:
         return f"❌ Error: {str(e)}", 500
+
+
+
+@app.route("/fix-password-emergency")
+def fix_password_emergency():
+    """Emergency route to fix code_monkey password - REMOVE AFTER USE"""
+    try:
+        from models import User
+        
+        user = User.query.filter_by(username="code_monkey").first()
+        
+        if not user:
+            return "❌ User 'code_monkey' not found", 404
+        
+        old_format = "unknown"
+        if user.password_hash:
+            if user.password_hash.startswith("$2b$"):
+                old_format = "bcrypt"
+            elif user.password_hash.startswith("scrypt:"):
+                old_format = "scrypt"
+        
+        user.set_password("password123")
+        db.session.commit()
+        
+        password_works = user.check_password("password123")
+        
+        return f"""<h2>Password Fix Results</h2>
+<p>✅ User: code_monkey (ID: {user.id})</p>
+<p>ℹ️ Old format: {old_format}</p>
+<p>✅ New format: bcrypt</p>
+<p>✅ Password set to: password123</p>
+<p>✅ Password test: {"PASSED" if password_works else "FAILED"}</p>
+<p><strong>You can now login with username: code_monkey, password: password123</strong></p>
+<p><em>IMPORTANT: Remove this route from app.py after use!</em></p>"""
+        
+    except Exception as e:
+        return f"❌ Error: {str(e)}", 500
+
+@app.route("/create-user-emergency")
+def create_user_emergency():
+    """Emergency route to create code_monkey user in production - REMOVE AFTER USE"""
+    try:
+        from models import User
+        
+        existing_user = User.query.filter_by(username="code_monkey").first()
+        if existing_user:
+            return "❌ User code_monkey already exists", 400
+        
+        new_user = User(
+            username="code_monkey",
+            email="bholsinger@gmail.com"
+        )
+        new_user.set_password("password123")
+        
+        db.session.add(new_user)
+        db.session.commit()
+        
+        created_user = User.query.filter_by(username="code_monkey").first()
+        password_works = created_user.check_password("password123") if created_user else False
+        
+        return f"""<h2>User Creation Results</h2>
+<p>✅ Created user: code_monkey (ID: {created_user.id if created_user else "FAILED"})</p>
+<p>✅ Email: bholsinger@gmail.com</p>
+<p>✅ Password: password123</p>
+<p>✅ Password format: bcrypt</p>
+<p>✅ Password test: {"PASSED" if password_works else "FAILED"}</p>
+<p><strong>You can now login with username: code_monkey, password: password123</strong></p>
+<p><em>IMPORTANT: Remove this route from app.py after use!</em></p>"""
+        
+    except Exception as e:
+        db.session.rollback()
+        return f"❌ Error creating user: {str(e)}", 500
 
 
 if __name__ == '__main__':
