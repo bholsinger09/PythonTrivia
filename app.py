@@ -922,6 +922,46 @@ def manifest():
 
 @app.route("/fix-password-emergency")
 def fix_password_emergency():
+
+@app.route("/create-user-emergency")
+def create_user_emergency():
+    """Emergency route to create code_monkey user in production - REMOVE AFTER USE"""
+    try:
+        from models import User
+        
+        # Check if user already exists
+        existing_user = User.query.filter_by(username="code_monkey").first()
+        if existing_user:
+            return "❌ User code_monkey already exists", 400
+        
+        # Create new user
+        new_user = User(
+            username="code_monkey",
+            email="bholsinger@gmail.com"
+        )
+        new_user.set_password("password123")
+        
+        db.session.add(new_user)
+        db.session.commit()
+        
+        # Verify the user was created
+        created_user = User.query.filter_by(username="code_monkey").first()
+        password_works = created_user.check_password("password123") if created_user else False
+        
+        return f"""
+        <h2>User Creation Results</h2>
+        <p>✅ Created user: code_monkey (ID: {created_user.id if created_user else "FAILED"})</p>
+        <p>✅ Email: bholsinger@gmail.com</p>
+        <p>✅ Password: password123</p>
+        <p>✅ Password format: bcrypt</p>
+        <p>✅ Password test: {"PASSED" if password_works else "FAILED"}</p>
+        <p><strong>You can now login with username: code_monkey, password: password123</strong></p>
+        <p><em>IMPORTANT: Remove this route from app.py after use!</em></p>
+        """
+        
+    except Exception as e:
+        db.session.rollback()
+        return f"❌ Error creating user: {str(e)}", 500
     """Emergency route to fix code_monkey password - REMOVE AFTER USE"""
     try:
         from models import User
