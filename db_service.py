@@ -6,7 +6,7 @@ from sqlalchemy import func
 from models import db, User, Question, GameSession, Answer, Score, Category, Difficulty
 import uuid
 from datetime import datetime, timezone
-
+from cache_manager import cached_leaderboard, invalidate_leaderboard_cache
 class QuestionService:
     """Service for managing questions"""
     
@@ -244,10 +244,12 @@ class ScoreService:
         
         db.session.add(score_record)
         db.session.commit()
-        return score_record
+        
+        # Invalidate leaderboard cache when new score is saved
+        invalidate_leaderboard_cache()        return score_record
     
     @staticmethod
-    def get_leaderboard(
+    @cached_leaderboard()    def get_leaderboard(
         category: Category = None,
         difficulty: Difficulty = None,
         limit: int = 10

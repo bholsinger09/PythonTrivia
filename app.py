@@ -27,6 +27,7 @@ from db_service import (
     QuestionService, GameSessionService, AnswerService, 
     ScoreService, UserService, DatabaseSeeder
 )
+from rate_limiter import api_rate_limit, game_rate_limit, strict_rate_limit, create_rate_limit_routes
 from user_persistence import smart_database_init, user_data_manager
 try:
     from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -129,13 +130,20 @@ def load_questions_from_db(
         # Ensure we're in app context
         if not app.app_context:
             raise RuntimeError("No application context")
-            
-        questions = QuestionService.get_questions_by_criteria(
+        # Use smart question selection algorithm
+        from smart_question_selector import get_smart_questions
+        
+        # Get current user ID if available
+        user_id = None
+        if HAS_LOGIN and current_user.is_authenticated:
+            user_id = current_user.id
+        
+        questions = get_smart_questions(
+            user_id=user_id,
             categories=categories,
             difficulty=difficulty,
-            limit=limit
-        )
-        
+            count=limit
+        )        
         # Convert DB questions to TriviaQuestion objects for compatibility
         trivia_questions = []
         for q in questions:
@@ -525,7 +533,7 @@ def leaderboard():
         return render_template('leaderboard.html', scores=[])
 
 
-@app.route('/api/leaderboard')
+@api_rate_limit@app.route('/api/leaderboard')
 def api_leaderboard():
     """API endpoint for leaderboard data"""
     category = request.args.get('category')
@@ -562,6 +570,7 @@ def api_leaderboard():
 
 
 @app.route('/api/save-score', methods=['POST'])
+@strict_rate_limit
 def save_score():
     """Save game score to database"""
     data = request.get_json()
@@ -690,6 +699,7 @@ def get_current_card():
 
 
 @app.route('/api/flip-card', methods=['POST'])
+@game_rate_limit
 def flip_card():
     """API endpoint to flip the current card"""
     current_card = game.get_current_card()
@@ -702,7 +712,7 @@ def flip_card():
     return jsonify({'success': False, 'message': 'No card to flip'})
 
 
-@app.route('/api/answer-card', methods=['POST'])
+@game_rate_limit@app.route('/api/answer-card', methods=['POST'])
 def answer_card():
     """API endpoint to handle answer choice selection"""
     data = request.get_json()
@@ -770,6 +780,7 @@ def answer_card():
 
 
 @app.route('/api/next-card', methods=['POST'])
+@game_rate_limit
 def next_card():
     """API endpoint to move to next card"""
     next_card = game.next_card()
@@ -940,7 +951,11 @@ def create_user_simple():
     except Exception as e:
         return f"Error: {e}"
 if __name__ == '__main__':
+    # Add database monitoring routes
+    from database_connection_monitor import create_pool_monitoring_routes
+    create_pool_monitoring_routes(app)
     # Initialize app when run directly
+    create_rate_limit_routes(app)
     initialize_app()
     
     # Use PORT from environment (Render provides this) or default to 5001

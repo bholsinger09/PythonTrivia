@@ -42,6 +42,17 @@ class DevelopmentConfig(Config):
     # Development-specific settings
     SQLALCHEMY_ECHO = False  # Set to True to see SQL queries
     
+    # Connection pooling for development (SQLite-compatible)
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_timeout': 20,
+        'pool_recycle': 300,
+        'pool_pre_ping': True,
+        'connect_args': {
+            'timeout': 20,
+            'check_same_thread': False  # SQLite specific
+        }
+    }
+    
 class ProductionConfig(Config):
     """Production environment configuration."""
     
@@ -55,10 +66,18 @@ class ProductionConfig(Config):
     # Production-specific settings
     SQLALCHEMY_ECHO = False
     
-    # Security settings
+    # Enhanced connection pooling for production
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_pre_ping': True,
-        'pool_recycle': 300,
+        'pool_size': 10,          # Number of connections to maintain
+        'max_overflow': 20,       # Additional connections beyond pool_size
+        'pool_timeout': 30,       # Seconds to wait for connection
+        'pool_recycle': 1800,     # Recycle connections after 30 minutes
+        'pool_pre_ping': True,    # Validate connections before use
+        'echo': False,
+        'connect_args': {
+            'connect_timeout': 10,
+            'application_name': 'PythonTriviaApp'
+        }
     }
 
 class TestingConfig(Config):
@@ -74,6 +93,17 @@ class TestingConfig(Config):
     # Testing-specific settings
     WTF_CSRF_ENABLED = False
     SQLALCHEMY_ECHO = False
+    
+    # Fast connection settings for testing
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_timeout': 5,
+        'pool_recycle': 60,
+        'pool_pre_ping': False,  # Skip for speed in testing
+        'connect_args': {
+            'timeout': 5,
+            'check_same_thread': False
+        }
+    }
 
 # Configuration dictionary for easy access
 config = {
