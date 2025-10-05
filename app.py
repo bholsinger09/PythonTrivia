@@ -95,7 +95,7 @@ def get_or_create_game_session() -> Optional[GameSession]:
         
         if not game_session:
             # Create new session
-            user_id = current_user.id if HAS_LOGIN and current_user.is_authenticated else None
+            user_id = current_user.id if HAS_LOGIN and current_user and current_user.is_authenticated else None
             game_session = GameSessionService.create_session(user_id=user_id)
             session['game_session_token'] = game_session.session_token
         
@@ -135,7 +135,7 @@ def load_questions_from_db(
         
         # Get current user ID if available
         user_id = None
-        if HAS_LOGIN and current_user.is_authenticated:
+        if HAS_LOGIN and current_user and current_user.is_authenticated:
             user_id = current_user.id
         
         questions = get_smart_questions(
@@ -594,12 +594,12 @@ def save_score():
             score=correct_answers * 10,  # Basic scoring: 10 points per correct answer
             accuracy_percentage=accuracy,
             questions_answered=total_questions,
-            user_id=current_user.id if HAS_LOGIN and current_user.is_authenticated else None,
+            user_id=current_user.id if HAS_LOGIN and current_user and current_user.is_authenticated else None,
             anonymous_name=data.get('anonymous_name', 'Anonymous')
         )
         
         # Update user statistics if authenticated
-        if HAS_LOGIN and current_user.is_authenticated:
+        if HAS_LOGIN and current_user and current_user.is_authenticated:
             UserService.update_user_stats(current_user.id, game_session)
         
         return jsonify({
@@ -749,7 +749,7 @@ def answer_card():
                 question_id=question.id,
                 selected_choice_index=choice_index,
                 is_correct=is_correct,
-                user_id=current_user.id if HAS_LOGIN and current_user.is_authenticated else None
+                user_id=current_user.id if HAS_LOGIN and current_user and current_user.is_authenticated else None
             )
             
             # Update session progress
