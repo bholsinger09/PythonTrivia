@@ -42,7 +42,6 @@ class MobileNavManager {
         navbar.appendChild(this.navToggle);
 
         // Add mobile classes
-        document.body.classList.add('mobile-nav-enhanced');
     }
 
     setupEventListeners() {
@@ -216,16 +215,6 @@ style.textContent = `
             transform: scale(2);
             opacity: 0;
         }
-    }
-    
-    .mobile-nav-enhanced .nav-link {
-        padding: 0.75rem 1rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-    
-    .mobile-nav-enhanced .nav-link:hover {
-        background: rgba(79, 70, 229, 0.1);
     }
     
     @media (max-width: 768px) {
