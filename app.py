@@ -533,7 +533,8 @@ def leaderboard():
         return render_template('leaderboard.html', scores=[])
 
 
-@api_rate_limit@app.route('/api/leaderboard')
+@api_rate_limit
+@app.route('/api/leaderboard')
 def api_leaderboard():
     """API endpoint for leaderboard data"""
     category = request.args.get('category')
@@ -712,7 +713,8 @@ def flip_card():
     return jsonify({'success': False, 'message': 'No card to flip'})
 
 
-@game_rate_limit@app.route('/api/answer-card', methods=['POST'])
+@game_rate_limit
+@app.route('/api/answer-card', methods=['POST'])
 def answer_card():
     """API endpoint to handle answer choice selection"""
     data = request.get_json()
