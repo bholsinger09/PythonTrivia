@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 
 # Import both old and new models for compatibility
 from src.models import TriviaGame, TriviaQuestion
-from models import db, User, Question, GameSession, Answer, Score, Category, Difficulty, UserBackup
+from models import db, User, Question, GameSession, Answer, Score, Category, Difficulty
 from config import DevelopmentConfig, ProductionConfig, TestingConfig
 from db_service import (
     QuestionService, GameSessionService, AnswerService, 
@@ -271,13 +271,7 @@ def init_db() -> None:
             if Question.query.count() == 0:
                 print("Seeding database with initial data...")
                 DatabaseSeeder.seed_sample_questions()
-
-            # Log user persistence status
-            user_count = User.query.count()
-            if user_count > 0:
-                print(f"Database initialized with {user_count} existing users preserved")
-            else:
-                print("Database initialized - no existing users found")                
+                
     except Exception as e:
         print(f"Database initialization error: {e}")
 
@@ -923,111 +917,6 @@ def manifest():
     return app.send_static_file('manifest.json')
 
 
-
-@app.route('/admin/database-status')
-def admin_database_status():
-    """Simple admin endpoint to check database status in production"""
-    try:
-        users = User.query.all()
-        user_list = [{'username': u.username, 'email': u.email, 'created_at': u.created_at.isoformat()} for u in users]
-        
-        from user_persistence import get_user_backup_status
-        backup_status = get_user_backup_status()
-        
-        html = f"""
-        <html>
-        <head><title>Database Status</title></head>
-        <body style="font-family: Arial; padding: 20px;">
-            <h1>Database Status - Python Trivia</h1>
-            <p><strong>Total Users:</strong> {len(user_list)}</p>
-            <p><strong>Backup Status:</strong> {backup_status.get('has_backup', False)}</p>
-            <h2>Users:</h2>
-            {''.join([f'<div>• {u["username"]} ({u["email"]}) - {u["created_at"]}</div>' for u in user_list])}
-            <p><a href="/game">Back to Game</a></p>
-        </body>
-        </html>
-        """
-        return html
-    except Exception as e:
-        return f"<html><body><h1>Error</h1><p>{str(e)}</p><p><a href='/game'>Back</a></p></body></html>", 500
-
-
-
-@app.route('/debug/routes')
-def debug_routes():
-    """Debug endpoint to check available routes in production"""
-    try:
-        from flask import url_for
-        routes = []
-        for rule in app.url_map.iter_rules():
-            routes.append({
-                'route': rule.rule,
-                'endpoint': rule.endpoint,
-                'methods': list(rule.methods)
-            })
-        
-        html = f"""
-        <html>
-        <head><title>Debug Routes</title></head>
-        <body style="font-family: Arial; padding: 20px;">
-            <h1>Available Routes in Production</h1>
-            <p><strong>Total Routes:</strong> {len(routes)}</p>
-            <h2>All Routes:</h2>
-            <ul>
-            {''.join([f'<li><strong>{r["route"]}</strong> -> {r["endpoint"]} ({r["methods"]})</li>' for r in routes])}
-            </ul>
-            <p><a href="/game">Back to Game</a></p>
-        </body>
-        </html>
-        """
-        return html
-    except Exception as e:
-        return f"<html><body><h1>Debug Error</h1><p>{str(e)}</p></body></html>", 500
-
-
-
-@app.route('/debug/password-test')
-def debug_password_test():
-    """Debug endpoint to test password verification for code_monkey"""
-    try:
-        user = User.query.filter_by(username='code_monkey').first()
-        if not user:
-            return "<html><body><h1>Password Debug</h1><p>User 'code_monkey' not found</p></body></html>"
-        
-        # Test common passwords
-        test_passwords = ['password', 'Password', 'code_monkey', 'Code_monkey', '123456', 'admin', 'Myspam#09']
-        
-        html = f"""
-        <html>
-        <head><title>Password Debug</title></head>
-        <body style="font-family: Arial; padding: 20px;">
-            <h1>Password Debug - code_monkey</h1>
-            <p><strong>User Found:</strong> {user.username}</p>
-            <p><strong>Email:</strong> {user.email}</p>
-            <p><strong>Password Hash:</strong> {user.password_hash[:50]}...</p>
-            <h2>Password Tests:</h2>
-            <ul>
-        """
-        
-        for test_pwd in test_passwords:
-            try:
-                result = user.check_password(test_pwd)
-                html += f"<li><strong>{test_pwd}</strong>: {'✅ MATCH' if result else '❌ No match'}</li>"
-            except Exception as e:
-                html += f"<li><strong>{test_pwd}</strong>: ❌ Error: {str(e)}</li>"
-        
-        html += """
-            </ul>
-            <p><strong>Try entering the password that shows ✅ MATCH when logging in.</strong></p>
-            <p><a href="/game">Back to Game</a></p>
-        </body>
-        </html>
-        """
-        return html
-    except Exception as e:
-        return f"<html><body><h1>Debug Error</h1><p>{str(e)}</p></body></html>", 500
-
-
 if __name__ == '__main__':
     # Initialize app when run directly
     initialize_app()
@@ -1035,14 +924,3 @@ if __name__ == '__main__':
     # Use PORT from environment (Render provides this) or default to 5001
     port = int(os.environ.get('PORT', 5001))
     app.run(debug=False, host='0.0.0.0', port=port)
-
-def backup_user_data() -> bool:
-    """Manually backup user data"""
-    with app.app_context():
-        return user_data_manager.backup_users()
-
-
-def restore_user_data() -> bool:
-    """Manually restore user data"""
-    with app.app_context():
-        return user_data_manager.restore_users()
