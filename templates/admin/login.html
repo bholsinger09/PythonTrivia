@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,45 +16,45 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .login-container {
             background: white;
             border-radius: 15px;
             padding: 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             text-align: center;
             max-width: 400px;
             width: 90%;
         }
-        
+
         .login-header {
             margin-bottom: 30px;
         }
-        
+
         .login-header h1 {
             color: #333;
             margin: 0 0 10px 0;
             font-size: 2.5em;
         }
-        
+
         .login-header p {
             color: #666;
             margin: 0;
             font-size: 1.1em;
         }
-        
+
         .form-group {
             margin-bottom: 20px;
             text-align: left;
         }
-        
+
         .form-group label {
             display: block;
             margin-bottom: 8px;
             font-weight: bold;
             color: #333;
         }
-        
+
         .form-group input {
             width: 100%;
             padding: 12px;
@@ -63,12 +64,12 @@
             box-sizing: border-box;
             transition: border-color 0.3s;
         }
-        
+
         .form-group input:focus {
             outline: none;
             border-color: #667eea;
         }
-        
+
         .login-btn {
             width: 100%;
             padding: 12px;
@@ -81,11 +82,11 @@
             cursor: pointer;
             transition: transform 0.2s;
         }
-        
+
         .login-btn:hover {
             transform: translateY(-2px);
         }
-        
+
         .warning {
             background: #fff3cd;
             border: 1px solid #ffeaa7;
@@ -94,19 +95,19 @@
             margin-top: 20px;
             text-align: left;
         }
-        
+
         .warning-title {
             font-weight: bold;
             color: #856404;
             margin-bottom: 5px;
         }
-        
+
         .warning-text {
             color: #856404;
             font-size: 14px;
             line-height: 1.4;
         }
-        
+
         .error {
             background: #f8d7da;
             border: 1px solid #f5c6cb;
@@ -115,7 +116,7 @@
             margin-bottom: 20px;
             color: #721c24;
         }
-        
+
         .admin-info {
             background: #e3f2fd;
             border: 1px solid #bbdefb;
@@ -124,24 +125,25 @@
             margin-top: 20px;
             text-align: left;
         }
-        
+
         .admin-info-title {
             font-weight: bold;
             color: #1565c0;
             margin-bottom: 8px;
         }
-        
+
         .admin-info ul {
             margin: 0;
             padding-left: 20px;
         }
-        
+
         .admin-info li {
             color: #1976d2;
             margin-bottom: 5px;
         }
     </style>
 </head>
+
 <body>
     <div class="login-container">
         <div class="login-header">
@@ -149,35 +151,34 @@
             <h1>Admin Panel</h1>
             <p>Secure User Management</p>
         </div>
-        
+
         {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="error">
-                    {{ messages[0] }}
-                </div>
-            {% endif %}
+        {% if messages %}
+        <div class="error">
+            {{ messages[0] }}
+        </div>
+        {% endif %}
         {% endwith %}
-        
+
         <form method="POST" action="/auth">
             <div class="form-group">
                 <label for="password">Admin Password:</label>
-                <input type="password" id="password" name="password" required 
-                       placeholder="Enter admin password">
+                <input type="password" id="password" name="password" required placeholder="Enter admin password">
             </div>
-            
+
             <button type="submit" class="login-btn">
                 🔓 Access Admin Panel
             </button>
         </form>
-        
+
         <div class="warning">
             <div class="warning-title">⚠️ Security Warning</div>
             <div class="warning-text">
-                This admin panel provides complete access to user data including 
+                This admin panel provides complete access to user data including
                 passwords. Only authorized administrators should access this system.
             </div>
         </div>
-        
+
         <div class="admin-info">
             <div class="admin-info-title">🛠️ Admin Capabilities</div>
             <ul>
@@ -191,4 +192,5 @@
         </div>
     </div>
 </body>
+
 </html>
