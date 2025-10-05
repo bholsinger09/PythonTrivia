@@ -1007,3 +1007,18 @@ if __name__ == '__main__':
     # Use PORT from environment (Render provides this) or default to 5001
     port = int(os.environ.get('PORT', 5001))
     app.run(debug=False, host='0.0.0.0', port=port)
+
+@app.route('/debug-routes')
+def debug_routes():
+    """Debug route to show all available routes"""
+    routes = []
+    for rule in app.url_map.iter_rules():
+        routes.append(f"{rule.endpoint}: {rule.rule} [{', '.join(rule.methods)}]")
+    
+    return f"""
+    <h2>Available Routes</h2>
+    <ul>
+        {''.join([f"<li>{route}</li>" for route in sorted(routes)])}
+    </ul>
+    <p>Total routes: {len(routes)}</p>
+    """
