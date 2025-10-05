@@ -47,7 +47,10 @@ elif env == 'testing':
 else:
     app.config.from_object(DevelopmentConfig)
 
-# Initialize extensions
+
+# Enable template auto-reload for development
+if env != 'production':
+    app.config['TEMPLATES_AUTO_RELOAD'] = True# Initialize extensions
 db.init_app(app)
 
 if HAS_LOGIN:
