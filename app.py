@@ -924,7 +924,14 @@ def start_game_api():
 @app.route('/sw.js')
 def service_worker():
     """Serve the service worker from root path"""
-    return app.send_static_file('sw.js')
+    try:
+        return app.send_static_file('sw.js')
+    except FileNotFoundError:
+        app.logger.error("Service worker file not found")
+        return "Service worker not found", 404
+    except Exception as e:
+        app.logger.error(f"Error serving service worker: {e}")
+        return "Service worker error", 500
 
 
 @app.route('/manifest.json')
