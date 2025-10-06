@@ -478,14 +478,14 @@
                         <td class="stats-cell">{{ user.total_games_played }}</td>
                         <td class="stats-cell">{{ user.total_points }}</td>
                         <td>
-                            <button class="action-btn btn-edit" onclick="editUser({{ user.id }})">
+                            <button class="action-btn btn-edit" onclick="editUser('{{ user.id }}')">
                                 ✏️ Edit
                             </button>
-                            <button class="action-btn btn-password" onclick="resetPassword({{ user.id }})">
+                            <button class="action-btn btn-password" onclick="resetPassword('{{ user.id }}')">
                                 🔑 Password
                             </button>
                             <button class="action-btn btn-delete"
-                                onclick="deleteUser({{ user.id }}, '{{ user.username }}')">
+                                onclick="deleteUser('{{ user.id }}', '{{ user.username }}')">
                                 🗑️ Delete
                             </button>
                         </td>
