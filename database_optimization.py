@@ -4,10 +4,9 @@ Provides optimized connection pool configurations and monitoring
 """
 import os
 import time
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from sqlalchemy import event, pool
 from sqlalchemy.engine import Engine
-from models import db
 from datetime import datetime
 
 class DatabaseConnectionOptimizer:

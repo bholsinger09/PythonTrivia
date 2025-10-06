@@ -4,12 +4,11 @@ Provides comprehensive performance tracking and analytics for the trivia applica
 """
 import time
 import functools
-from typing import Dict, List, Optional, Any, Callable
-from datetime import datetime, timedelta
+from typing import Dict, List, Callable
+from datetime import datetime
 from collections import defaultdict, deque
-from flask import request, g
+from flask import request
 import threading
-import json
 
 class PerformanceMetrics:
     """Centralized performance metrics collection and analysis"""

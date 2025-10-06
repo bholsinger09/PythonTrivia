@@ -3,13 +3,11 @@ Enhanced Caching Strategy for Python Trivia Game
 Advanced in-memory caching with compression, warming, and intelligent invalidation
 """
 import time
-import json
 import gzip
 import pickle
 import threading
-from typing import Any, Dict, Optional, List, Callable, Union
+from typing import Any, Dict, Optional, List, Callable
 from functools import wraps
-from datetime import datetime, timedelta
 import hashlib
 from collections import defaultdict, OrderedDict
 

@@ -6,10 +6,9 @@ import gzip
 import json
 import hashlib
 import time
-import io
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Tuple, Union
 from functools import wraps
-from flask import request, Response, jsonify, current_app, g
+from flask import request, Response
 
 # Try to import orjson for faster JSON serialization
 try:

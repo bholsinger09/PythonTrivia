@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -165,17 +166,18 @@
             .metrics-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .header h1 {
                 font-size: 2rem;
             }
-            
+
             .metric-card {
                 padding: 20px;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="dashboard">
         <div class="header">
@@ -215,17 +217,17 @@
 
             try {
                 const response = await fetch('/api/admin/performance-metrics');
-                
+
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
                 const data = await response.json();
                 displayMetrics(data);
-                
+
                 lastUpdateTime = new Date();
                 timestampEl.textContent = `Last updated: ${lastUpdateTime.toLocaleString()}`;
-                
+
                 loadingEl.style.display = 'none';
                 metricsContainer.style.display = 'grid';
 
@@ -278,13 +280,13 @@
         function createCacheCard(cacheData) {
             const card = document.createElement('div');
             card.className = 'metric-card';
-            
+
             let content = '<h3>💾 Cache Performance</h3>';
-            
+
             for (const [cacheType, stats] of Object.entries(cacheData)) {
                 const hitRatio = stats.hit_ratio_percent || 0;
                 const statusClass = hitRatio > 80 ? 'good' : hitRatio > 50 ? 'warning' : 'danger';
-                
+
                 content += `
                     <div class="metric-item">
                         <span class="metric-label">${cacheType} Hit Ratio</span>
@@ -296,7 +298,7 @@
                     </div>
                 `;
             }
-            
+
             card.innerHTML = content;
             return card;
         }
@@ -304,13 +306,13 @@
         function createRequestCard(requestData) {
             const card = document.createElement('div');
             card.className = 'metric-card';
-            
+
             let content = '<h3>🌐 Request Performance</h3>';
-            
+
             for (const [endpoint, stats] of Object.entries(requestData)) {
                 const avgTime = stats.avg_response_time || 0;
                 const statusClass = avgTime < 0.5 ? 'good' : avgTime < 1.0 ? 'warning' : 'danger';
-                
+
                 content += `
                     <div class="metric-item">
                         <span class="metric-label">${endpoint}</span>
@@ -322,7 +324,7 @@
                     </div>
                 `;
             }
-            
+
             card.innerHTML = content;
             return card;
         }
@@ -330,15 +332,15 @@
         function createDatabaseCard(dbData) {
             const card = document.createElement('div');
             card.className = 'metric-card';
-            
+
             let content = '<h3>🗄️ Database Performance</h3>';
-            
+
             if (dbData.message) {
                 content += `<div class="metric-item"><span class="metric-label">${dbData.message}</span></div>`;
             } else {
                 const avgTime = dbData.avg_query_time || 0;
                 const statusClass = avgTime < 0.1 ? 'good' : avgTime < 0.5 ? 'warning' : 'danger';
-                
+
                 content += `
                     <div class="metric-item">
                         <span class="metric-label">Avg Query Time</span>
@@ -354,7 +356,7 @@
                     </div>
                 `;
             }
-            
+
             card.innerHTML = content;
             return card;
         }
@@ -362,13 +364,13 @@
         function createRateLimitCard(rateLimitData) {
             const card = document.createElement('div');
             card.className = 'metric-card';
-            
+
             let content = '<h3>🛡️ Rate Limiting</h3>';
-            
+
             for (const [endpoint, stats] of Object.entries(rateLimitData)) {
                 const blockRate = stats.block_rate_percent || 0;
                 const statusClass = blockRate < 5 ? 'good' : blockRate < 20 ? 'warning' : 'danger';
-                
+
                 content += `
                     <div class="metric-item">
                         <span class="metric-label">${endpoint}</span>
@@ -376,7 +378,7 @@
                     </div>
                 `;
             }
-            
+
             card.innerHTML = content;
             return card;
         }
@@ -384,9 +386,9 @@
         function createErrorCard(errorData) {
             const card = document.createElement('div');
             card.className = 'metric-card';
-            
+
             let content = '<h3>⚠️ Error Summary</h3>';
-            
+
             if (Object.keys(errorData).length === 0) {
                 content += '<div class="metric-item"><span class="metric-label">No errors recorded</span><span class="metric-value good">✓</span></div>';
             } else {
@@ -400,7 +402,7 @@
                     `;
                 }
             }
-            
+
             card.innerHTML = content;
             return card;
         }
@@ -408,16 +410,16 @@
         function createHealthCard(data) {
             const card = document.createElement('div');
             card.className = 'metric-card';
-            
+
             // Determine overall health
             let healthStatus = 'healthy';
             let healthColor = 'status-healthy';
-            
+
             // Check for any concerning metrics
             const cacheHitRates = Object.values(data.cache_performance || {}).map(c => c.hit_ratio_percent || 0);
             const requestTimes = Object.values(data.request_performance || {}).map(r => r.avg_response_time || 0);
             const errorCount = Object.values(data.error_summary || {}).reduce((a, b) => a + b, 0);
-            
+
             if (errorCount > 20 || requestTimes.some(t => t > 2.0)) {
                 healthStatus = 'unhealthy';
                 healthColor = 'status-danger';
@@ -425,7 +427,7 @@
                 healthStatus = 'degraded';
                 healthColor = 'status-warning';
             }
-            
+
             const content = `
                 <h3>🏥 System Health</h3>
                 <div class="metric-item">
@@ -440,7 +442,7 @@
                     <span class="metric-value">${new Date(data.timestamp).toLocaleTimeString()}</span>
                 </div>
             `;
-            
+
             card.innerHTML = content;
             return card;
         }
@@ -452,4 +454,5 @@
         loadMetrics();
     </script>
 </body>
+
 </html>
