@@ -54,6 +54,14 @@ if env != 'production':
     app.config['TEMPLATES_AUTO_RELOAD'] = True# Initialize extensions
 db.init_app(app)
 
+# Initialize database and ensure essential users exist (production only)
+if env == "production":
+    try:
+        from ensure_users import init_app_with_users
+        init_app_with_users(app)
+    except Exception as e:
+        app.logger.error(f"Failed to initialize users: {e}")
+
 if HAS_LOGIN:
     login_manager = LoginManager()
     login_manager.init_app(app)
@@ -970,3 +978,30 @@ if __name__ == '__main__':
     # Use PORT from environment (Render provides this) or default to 5001
     port = int(os.environ.get('PORT', 5001))
     app.run(debug=False, host='0.0.0.0', port=port)
+
+
+# Debug endpoint to check users (production only)
+@app.route("/debug/users")
+def debug_users():
+    if os.getenv("FLASK_ENV") != "production":
+        return "Debug endpoint only available in production", 403
+    
+    try:
+        users = User.query.all()
+        user_list = []
+        for user in users:
+            user_list.append({
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "created_at": str(user.created_at),
+                "active": user.is_active
+            })
+        
+        return jsonify({
+            "total_users": len(users),
+            "users": user_list,
+            "database_url": os.getenv("DATABASE_URL", "not set")[:50] + "..."
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

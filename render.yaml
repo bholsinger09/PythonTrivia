@@ -4,7 +4,7 @@ services:
     env: python
     repo: https://github.com/bholsinger09/PythonTrivia.git
     buildCommand: pip install -r requirements.txt
-    startCommand: python init_persistent_db.py && gunicorn wsgi:app
+    startCommand: gunicorn wsgi:app
     plan: free
     envVars:
       - key: FLASK_ENV
