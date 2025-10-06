@@ -61,24 +61,37 @@ class ProductionConfig(Config):
     TESTING = False
     
     # Database settings - PostgreSQL for production
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///trivia_prod.db'
+    DATABASE_URL = os.environ.get('DATABASE_URL') or 'sqlite:///trivia_prod.db'
+    SQLALCHEMY_DATABASE_URI = DATABASE_URL
     
     # Production-specific settings
     SQLALCHEMY_ECHO = False
     
-    # Enhanced connection pooling for production
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_size': 10,          # Number of connections to maintain
-        'max_overflow': 20,       # Additional connections beyond pool_size
-        'pool_timeout': 30,       # Seconds to wait for connection
-        'pool_recycle': 1800,     # Recycle connections after 30 minutes
-        'pool_pre_ping': True,    # Validate connections before use
-        'echo': False,
-        'connect_args': {
-            'connect_timeout': 10,
-            'application_name': 'PythonTriviaApp'
+    # Conditional connection pooling based on database type
+    if DATABASE_URL and DATABASE_URL.startswith('postgresql'):
+        # PostgreSQL connection pooling
+        SQLALCHEMY_ENGINE_OPTIONS = {
+            'pool_size': 10,          # Number of connections to maintain
+            'max_overflow': 20,       # Additional connections beyond pool_size
+            'pool_timeout': 30,       # Seconds to wait for connection
+            'pool_recycle': 1800,     # Recycle connections after 30 minutes
+            'pool_pre_ping': True,    # Validate connections before use
+            'echo': False,
+            'connect_args': {
+                'connect_timeout': 10,
+                'application_name': 'PythonTriviaApp'
+            }
         }
-    }
+    else:
+        # SQLite connection settings
+        SQLALCHEMY_ENGINE_OPTIONS = {
+            'pool_timeout': 20,
+            'pool_recycle': 300,
+            'pool_pre_ping': True,
+            'connect_args': {
+                'check_same_thread': False
+            }
+        }
 
 class TestingConfig(Config):
     """Testing environment configuration."""
