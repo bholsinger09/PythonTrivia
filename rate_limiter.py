@@ -8,6 +8,13 @@ from typing import Dict, Tuple, Optional
 from functools import wraps
 from flask import request, jsonify, g
 
+# Import performance monitoring for rate limit analytics
+try:
+    from performance_monitoring import performance_metrics
+    HAS_MONITORING = True
+except ImportError:
+    HAS_MONITORING = False
+
 class RateLimiter:
     """Simple in-memory rate limiter using sliding window"""
     
@@ -46,10 +53,20 @@ class RateLimiter:
         current_requests = len(request_times)
         
         if current_requests >= limit:
+            # Record rate limit block
+            if HAS_MONITORING:
+                endpoint = key.split(':')[-1] if ':' in key else 'unknown'
+                performance_metrics.record_rate_limit_event(endpoint, 'block')
+            
             return False, 0
         
         # Add current request
         request_times.append(now)
+        
+        # Record successful request
+        if HAS_MONITORING:
+            endpoint = key.split(':')[-1] if ':' in key else 'unknown'
+            performance_metrics.record_rate_limit_event(endpoint, 'hit')
         
         return True, limit - current_requests - 1
     

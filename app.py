@@ -21,14 +21,26 @@ from datetime import datetime, timezone
 
 # Import both old and new models for compatibility
 from src.models import TriviaGame, TriviaQuestion
-from models import db, User, Question, GameSession, Answer, Score, Category, Difficulty
+from models import db, User, Question, GameSession, Answer, Score, Category, Difficulty, UserBackup
 from config import DevelopmentConfig, ProductionConfig, TestingConfig
 from db_service import (
     QuestionService, GameSessionService, AnswerService, 
     ScoreService, UserService, DatabaseSeeder
 )
-from rate_limiter import api_rate_limit, game_rate_limit, strict_rate_limit, create_rate_limit_routes
 from user_persistence import smart_database_init, user_data_manager
+
+# Performance optimization imports
+from cache_manager import (
+    cached_questions, cached_leaderboard, 
+    invalidate_leaderboard_cache, get_cache_stats
+)
+from smart_question_selector import get_smart_questions
+from rate_limiter import (
+    api_rate_limit, game_rate_limit, user_rate_limit, 
+    create_rate_limit_routes
+)
+from database_connection_monitor import create_pool_monitoring_routes
+
 try:
     from flask_login import LoginManager, login_user, logout_user, login_required, current_user
     HAS_LOGIN = True
@@ -48,20 +60,14 @@ elif env == 'testing':
 else:
     app.config.from_object(DevelopmentConfig)
 
-
-# Enable template auto-reload for development
-if env != 'production':
-    app.config['TEMPLATES_AUTO_RELOAD'] = True# Initialize extensions
+# Initialize extensions
 db.init_app(app)
 
-# Initialize database and ensure essential users exist (production only)
-if env == "production":
-    try:
-        from ensure_users import init_app_with_users
-        init_app_with_users(app)
-    except Exception as e:
-        app.logger.error(f"Failed to initialize users: {e}")
+# Initialize performance monitoring routes
+create_rate_limit_routes(app)
+create_pool_monitoring_routes(app)
 
+# Initialize Flask-Login if available
 if HAS_LOGIN:
     login_manager = LoginManager()
     login_manager.init_app(app)
@@ -70,947 +76,323 @@ if HAS_LOGIN:
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
-else:
-    # Mock current_user for when Flask-Login is not available
-    class MockUser:
-        is_authenticated = False
-        id = None
-    current_user = MockUser()
 
-# Global game instance (for backward compatibility)
-game = TriviaGame()
+# Initialize services
+question_service = QuestionService()
+game_session_service = GameSessionService()
+answer_service = AnswerService()
+score_service = ScoreService()
+user_service = UserService()
+database_seeder = DatabaseSeeder()
 
-
-def get_or_create_game_session() -> Optional[GameSession]:
-    """
-    Get or create a game session for the current user or anonymous session.
-    
-    This function implements session management for both authenticated and
-    anonymous users, maintaining game state across requests.
-    
-    Returns:
-        GameSession: Active game session for the current user/session
-        None: If session creation fails
-        
-    PEP 20: "Explicit is better than implicit" - clear return type and behavior
-    """
-    try:
-        session_token = session.get('game_session_token')
-        game_session = None
-        
-        if session_token:
-            game_session = GameSessionService.get_session_by_token(session_token)
-        
-        if not game_session:
-            # Create new session
-            user_id = current_user.id if HAS_LOGIN and current_user and current_user.is_authenticated else None
-            game_session = GameSessionService.create_session(user_id=user_id)
-            session['game_session_token'] = game_session.session_token
-        
-        return game_session
-    except Exception as e:
-        print(f"Error managing game session: {e}")
-        return None
-
-
-def load_questions_from_db(
-    categories: Optional[List[Category]] = None,
-    difficulty: Optional[Difficulty] = None,
-    limit: int = 20
-) -> List[TriviaQuestion]:
-    """
-    Load questions from database with optional filtering.
-    
-    Args:
-        categories: List of categories to filter by (optional)
-        difficulty: Difficulty level to filter by (optional)  
-        limit: Maximum number of questions to return (default: 20)
-        
-    Returns:
-        List[TriviaQuestion]: List of trivia questions from database
-        
-    Raises:
-        RuntimeError: If no application context is available
-        
-    PEP 20: "Simple is better than complex" - focused single responsibility
-    """
-    try:
-        # Ensure we're in app context
-        if not app.app_context:
-            raise RuntimeError("No application context")
-        # Use smart question selection algorithm
-        from smart_question_selector import get_smart_questions
-        
-        # Get current user ID if available
-        user_id = None
-        if HAS_LOGIN and current_user and current_user.is_authenticated:
-            user_id = current_user.id
-        
-        questions = get_smart_questions(
-            user_id=user_id,
-            categories=categories,
-            difficulty=difficulty,
-            count=limit
-        )        
-        # Convert DB questions to TriviaQuestion objects for compatibility
-        trivia_questions = []
-        for q in questions:
-            trivia_q = TriviaQuestion(
-                question=q.question_text,
-                answer=q.correct_answer,
-                category=q.category,
-                difficulty=q.difficulty,
-                explanation=q.explanation or "",
-                choices=q.get_choices(),
-                correct_choice_index=q.correct_choice_index
-            )
-            trivia_questions.append(trivia_q)
-        
-        return trivia_questions
-    except Exception as e:
-        print(f"Error loading questions from DB: {e}")
-        return load_sample_questions_fallback()
-
-
-def load_sample_questions_fallback():
-    """Load sample trivia questions into the game (fallback for when DB is not available)"""
-    sample_questions = [
-        TriviaQuestion(
-            "What is the output of print(type([]))?",
-            "<class 'list'>",
-            Category.BASICS,
-            Difficulty.EASY,
-            "The type() function returns the type of an object. An empty list [] is of type 'list'.",
-            choices=["<class 'list'>", "<class 'array'>"],
-            correct_choice_index=0
-        ),
-        TriviaQuestion(
-            "Which Python keyword is used to define a function?",
-            "def",
-            Category.FUNCTIONS,
-            Difficulty.EASY,
-            "The 'def' keyword is used to define functions in Python.",
-            choices=["def", "function"],
-            correct_choice_index=0
-        ),
-        TriviaQuestion(
-            "What does PEP stand for in Python?",
-            "Python Enhancement Proposal",
-            Category.BASICS,
-            Difficulty.MEDIUM,
-            "PEP stands for Python Enhancement Proposal, which are design documents for Python.",
-            choices=["Python Enhancement Proposal", "Python Executable Package"],
-            correct_choice_index=0
-        ),
-        TriviaQuestion(
-            "What is the difference between a list and a tuple in Python?",
-            "Lists are mutable, tuples are immutable",
-            Category.DATA_STRUCTURES,
-            Difficulty.MEDIUM,
-            "Lists can be modified after creation (mutable), while tuples cannot be changed (immutable).",
-            choices=["Lists are mutable, tuples are immutable", "Lists are immutable, tuples are mutable"],
-            correct_choice_index=0
-        ),
-        TriviaQuestion(
-            "What is a decorator in Python?",
-            "A function that modifies another function",
-            Category.ADVANCED,
-            Difficulty.HARD,
-            "Decorators are a way to modify or enhance functions without permanently modifying their code.",
-            choices=["A function that modifies another function", "A special type of class"],
-            correct_choice_index=0
-        ),
-        TriviaQuestion(
-            "What does the __init__ method do in a Python class?",
-            "Initializes a new instance of the class",
-            Category.OOP,
-            Difficulty.MEDIUM,
-            "The __init__ method is the constructor that initializes new objects when they are created.",
-            choices=["Initializes a new instance of the class", "Destroys an instance of the class"],
-            correct_choice_index=0
-        ),
-        TriviaQuestion(
-            "Which library is commonly used for data analysis in Python?",
-            "pandas",
-            Category.LIBRARIES,
-            Difficulty.EASY,
-            "Pandas is the most popular library for data manipulation and analysis in Python.",
-            choices=["pandas", "numpy"],
-            correct_choice_index=0
-        ),
-        TriviaQuestion(
-            "What is the Global Interpreter Lock (GIL) in Python?",
-            "A mutex that prevents multiple threads from executing Python code simultaneously",
-            Category.ADVANCED,
-            Difficulty.HARD,
-            "The GIL ensures that only one thread executes Python bytecode at a time, affecting multi-threading performance.",
-            choices=["A mutex that prevents multiple threads from executing Python code simultaneously", "A feature that speeds up multi-threaded programs"],
-            correct_choice_index=0
-        )
-    ]
-    
-    return sample_questions
-
-
-def initialize_game_with_questions() -> None:
-    """
-    Initialize the global game instance with questions from database.
-    
-    Fallback to hardcoded questions if database unavailable.
-    
-    PEP 20: "Errors should never pass silently" - proper exception handling
-    """
-    try:
-        # Try to load from database first
-        questions = load_questions_from_db()
-        for question in questions:
-            game.add_question(question)
-    except Exception as e:
-        print(f"Failed to load from database, using fallback: {e}")
-        # Fallback to hardcoded questions
-        questions = load_sample_questions_fallback()
-        for question in questions:
-            game.add_question(question)
-    
-    game.shuffle_cards()
-
-
-# Database initialization
-def init_db() -> None:
-    """
-    Initialize database tables and seed data if needed.
-    
-    PEP 20: "Simple is better than complex" - focused initialization
-    """
+def initialize_database():
+    """Initialize database with smart migration support"""
     try:
         with app.app_context():
-            smart_database_init(preserve_users=True)
-            
-            # Check if we need to seed data
-            if Question.query.count() == 0:
-                print("Seeding database with initial data...")
-                DatabaseSeeder.seed_sample_questions()
-                
+            smart_database_init(app, db)
+            print("Database initialized successfully")
     except Exception as e:
         print(f"Database initialization error: {e}")
+        raise
 
+@app.before_first_request
+def create_tables():
+    """Create database tables on first request"""
+    initialize_database()
 
-# Initialize database when module is imported
-def initialize_app():
-    """Initialize the app with database and sample data"""
-    with app.app_context():
-        try:
-            if app.config.get('SQLALCHEMY_DATABASE_URI'):
-                init_db()
-        except Exception as e:
-            print(f"Failed to initialize database: {e}")
-        
-        # Initialize game with questions
-        initialize_game_with_questions()
-
-
-# PEP 20 Validation helpers following "Simple is better than complex"
-def validate_username(username: str) -> Optional[str]:
-    """
-    Validate username according to application rules.
-    
-    Args:
-        username: Username string to validate
-        
-    Returns:
-        str: Error message if validation fails, None if valid
-        
-    PEP 20: "Simple is better than complex" - single responsibility validation
-    """
-    if not username or not username.strip():
-        return 'Username is required'
-    
-    username = username.strip()
-    if len(username) < 3 or len(username) > 20:
-        return 'Username must be 3-20 characters'
-    
-    if not username.replace('_', '').isalnum():
-        return 'Username can only contain letters, numbers, and underscores'
-    
-    return None
-
-
-def validate_email(email: str) -> Optional[str]:
-    """
-    Validate email according to application rules.
-    
-    Args:
-        email: Email string to validate
-        
-    Returns:
-        str: Error message if validation fails, None if valid
-        
-    PEP 20: "Explicit is better than implicit" - clear validation logic
-    """
-    if not email or not email.strip():
-        return 'Email is required'
-    
-    email = email.strip().lower()
-    if '@' not in email or '.' not in email.split('@')[-1]:
-        return 'Please enter a valid email address'
-    
-    return None
-
-
-def validate_password(password: str) -> Optional[str]:
-    """
-    Validate password according to application rules.
-    
-    Args:
-        password: Password string to validate
-        
-    Returns:
-        str: Error message if validation fails, None if valid
-        
-    PEP 20: "Readability counts" - clear password validation
-    """
-    if not password:
-        return 'Password is required'
-    
-    if len(password) < 6:
-        return 'Password must be at least 6 characters'
-    
-    return None
-
-
-def validate_password_confirmation(password: str, confirm_password: str) -> Optional[str]:
-    """
-    Validate password confirmation matches.
-    
-    Args:
-        password: Original password
-        confirm_password: Password confirmation
-        
-    Returns:
-        str: Error message if passwords don't match, None if valid
-    """
-    if confirm_password and password != confirm_password:
-        return 'Passwords do not match'
-    
-    return None
-
-
-def check_user_exists(username: str, email: str) -> Optional[str]:
-    """
-    Check if user already exists in system.
-    
-    Args:
-        username: Username to check
-        email: Email to check
-        
-    Returns:
-        str: Error message if user exists, None if available
-        
-    PEP 20: "Simple is better than complex" - focused existence check
-    """
-    if UserService.get_user_by_username(username):
-        return 'Username already exists'
-    
-    if UserService.get_user_by_email(email):
-        return 'Email already registered'
-    
-    return None
-
-
-# Authentication routes
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    """
-    User registration with PEP 20 compliant validation.
-    
-    Following "Simple is better than complex" - uses helper functions for validation.
-    Following "Explicit is better than implicit" - clear error handling.
-    
-    Returns:
-        Response: JSON or HTML response based on request type
-    """
-    if request.method == 'POST':
-        data = request.get_json() if request.is_json else request.form
-        username = data.get('username', '').strip()
-        email = data.get('email', '').strip().lower()
-        password = data.get('password', '')
-        confirm_password = data.get('confirm_password', '')
-        
-        # Validate empty fields first
-        if not all([username, email, password]):
-            error = 'All fields required'
-        else:
-            # PEP 20: "Simple is better than complex" - use validation helpers
-            # Check individual validations before checking existence
-            error = (validate_username(username) or 
-                    validate_email(email) or 
-                    validate_password(password) or
-                    check_user_exists(username, email) or
-                    validate_password_confirmation(password, confirm_password))
-        
-        if error:
-            if request.is_json:
-                return jsonify({'success': False, 'message': error}), 400
-            return render_template('register.html', error=error), 400
-        
-        # Create user
-        try:
-            user = UserService.create_user(username, email, password)
-            if request.is_json:
-                return jsonify({'success': True, 'message': 'Registration successful'})
-            else:
-                if HAS_LOGIN:
-                    login_user(user)
-                return redirect(url_for('game_page'))
-        except Exception as e:
-            app.logger.error(f"Registration error: {e}")
-            if request.is_json:
-                return jsonify({'success': False, 'message': 'Registration failed'}), 500
-            return render_template('register.html', error='Registration failed'), 500
-    
-    return render_template('register.html')
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login() -> Union[str, Response]:
-    """
-    User login with enhanced validation.
-    
-    Returns:
-        Union[str, Response]: HTML template or JSON response
-        
-    PEP 20: "Explicit is better than implicit" - clear return types
-    """
-    if request.method == 'POST':
-        data = request.get_json() if request.is_json else request.form
-        username = data.get('username', '').strip()
-        password = data.get('password', '')
-        
-        # Input validation
-        if not username or not password:
-            if request.is_json:
-                return jsonify({'success': False, 'message': 'Username and password required'}), 400
-            return render_template('login.html', error='Username and password required'), 400
-        
-        if len(username) > 20 or len(password) > 255:
-            if request.is_json:
-                return jsonify({'success': False, 'message': 'Invalid username or password'}), 400
-            return render_template('login.html', error='Invalid username or password'), 400
-        
-        try:
-            user = UserService.get_user_by_username(username)
-            
-            # Auto-create essential user if it does not exist
-            if not user and username == "code_monkey" and password == "password123":
-                try:
-                    app.logger.info("Auto-creating essential user: code_monkey")
-                    user = UserService.create_user(username, "bholsinger@gmail.com", password)
-                    app.logger.info("Essential user created successfully")
-                except Exception as e:
-                    app.logger.error(f"Failed to create essential user: {e}")
-            
-            if user and user.check_password(password):
-                if HAS_LOGIN:
-                    login_user(user)
-                if request.is_json:
-                    return jsonify({'success': True, 'message': 'Login successful'})
-                else:
-                    return redirect(url_for('game_page'))
-            else:
-                if request.is_json:
-                    return jsonify({'success': False, 'message': 'Invalid username or password'}), 400
-                else:
-                    return render_template('login.html', error='Invalid username or password'), 400
-        except Exception as e:
-            app.logger.error(f"Login error: {e}")
-            if request.is_json:
-                return jsonify({'success': False, 'message': 'Login failed'}), 500
-            else:
-                return render_template('login.html', error='Login failed'), 500
-    
-    return render_template('login.html')
-
-
-@app.route('/logout')
-def logout():
-    """User logout"""
-    if HAS_LOGIN:
-        logout_user()
-    return redirect(url_for('index'))
-
-
-@app.route('/leaderboard')
-def leaderboard():
-    """Display leaderboard"""
-    try:
-        scores = ScoreService.get_leaderboard(limit=20)
-        return render_template('leaderboard.html', scores=scores)
-    except Exception as e:
-        print(f"Error loading leaderboard: {e}")
-        return render_template('leaderboard.html', scores=[])
-
-
-@api_rate_limit
-@app.route('/api/leaderboard')
-def api_leaderboard():
-    """API endpoint for leaderboard data"""
-    category = request.args.get('category')
-    difficulty = request.args.get('difficulty')
-    limit = int(request.args.get('limit', 10))
-    
-    try:
-        # Convert string parameters to enums if provided
-        category_enum = Category(category) if category else None
-        difficulty_enum = Difficulty(difficulty) if difficulty else None
-        
-        scores = ScoreService.get_leaderboard(
-            category=category_enum,
-            difficulty=difficulty_enum,
-            limit=limit
-        )
-        
-        scores_data = []
-        for score in scores:
-            scores_data.append({
-                'id': score.id,
-                'username': score.user.username if score.user else score.anonymous_name,
-                'score': score.score,
-                'accuracy': score.accuracy_percentage,
-                'questions_answered': score.questions_answered,
-                'category': score.category.value if score.category else None,
-                'difficulty': score.difficulty.value if score.difficulty else None,
-                'achieved_at': score.achieved_at.isoformat()
-            })
-        
-        return jsonify({'success': True, 'scores': scores_data})
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)})
-
-
-@app.route('/api/save-score', methods=['POST'])
-@strict_rate_limit
-def save_score():
-    """Save game score to database"""
-    data = request.get_json()
-    
-    try:
-        # Get current game session
-        game_session = get_or_create_game_session()
-        
-        # Calculate game statistics
-        total_questions = len(game.cards)
-        correct_answers = game.score
-        accuracy = game.get_score_percentage()
-        
-        # Mark session as completed
-        GameSessionService.complete_session(game_session.id)
-        
-        # Save score
-        score_record = ScoreService.save_score(
-            game_session_id=game_session.id,
-            score=correct_answers * 10,  # Basic scoring: 10 points per correct answer
-            accuracy_percentage=accuracy,
-            questions_answered=total_questions,
-            user_id=current_user.id if HAS_LOGIN and current_user and current_user.is_authenticated else None,
-            anonymous_name=data.get('anonymous_name', 'Anonymous')
-        )
-        
-        # Update user statistics if authenticated
-        if HAS_LOGIN and current_user and current_user.is_authenticated:
-            UserService.update_user_stats(current_user.id, game_session)
-        
-        return jsonify({
-            'success': True,
-            'score_id': score_record.id,
-            'final_score': score_record.score,
-            'accuracy': score_record.accuracy_percentage
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)})
-
-
-@app.route('/profile')
-def profile():
-    """User profile page"""
-    if not HAS_LOGIN or not current_user.is_authenticated:
-        return redirect(url_for('login'))
-    
-    try:
-        # Get user's recent sessions and best scores
-        recent_sessions = GameSessionService.get_user_sessions(current_user.id)
-        best_scores = ScoreService.get_user_best_scores(current_user.id)
-        
-        return render_template('profile.html', 
-                             user=current_user,
-                             recent_sessions=recent_sessions,
-                             best_scores=best_scores)
-    except Exception as e:
-        print(f"Error loading profile: {e}")
-        return render_template('profile.html', user=current_user, 
-                             recent_sessions=[], best_scores=[])
-
+# MAIN ROUTES
 
 @app.route('/')
-def index() -> str:
-    """
-    Home page route.
-    
-    Returns:
-        str: Rendered HTML template
-        
-    PEP 20: "Simple is better than complex" - single responsibility
-    """
+@api_rate_limit
+def index():
+    """Main landing page with game interface"""
     return render_template('index.html')
 
-
-@app.route('/debug')
-def debug_page():
-    """Debug page to test question display"""
-    return render_template('debug.html')
-
-
 @app.route('/game')
-def game_page() -> str:
-    """
-    Main game page route.
-    
-    Returns:
-        str: Rendered HTML template
-        
-    PEP 20: "Beautiful is better than ugly" - clean route organization
-    """
-    if not game.cards:
-        initialize_game_with_questions()
-    
-    current_card = game.get_current_card()
-    return render_template('game.html', 
-                         current_card=current_card,
-                         game_stats={
-                             'current_index': game.current_card_index,
-                             'total_cards': len(game.cards),
-                             'score': game.score,
-                             'percentage': round(game.get_score_percentage(), 1)
-                         })
+@api_rate_limit 
+def game():
+    """Interactive trivia game page"""
+    return render_template('game.html')
 
+@app.route('/leaderboard')
+@api_rate_limit
+def leaderboard():
+    """Leaderboard display page"""
+    return render_template('leaderboard.html')
 
-@app.route('/api/current-card', methods=['GET', 'POST'])
-def get_current_card():
-    """API endpoint to get current card data"""
-    if request.method == 'POST':
-        # POST method not supported for this endpoint, return 400
-        return jsonify({'error': 'POST method not supported for this endpoint'}), 400
-    
-    current_card = game.get_current_card()
-    if current_card:
-        return jsonify({
-            'success': True,
-            'card': current_card.to_dict(),
-            'game_stats': {
-                'current_index': game.current_card_index,
-                'total_cards': len(game.cards),
-                'score': game.score,
-                'percentage': round(game.get_score_percentage(), 1)
-            }
-        })
-    return jsonify({'success': False, 'message': 'No current card available'})
+# API ENDPOINTS
 
-
-@app.route('/api/flip-card', methods=['POST'])
-@game_rate_limit
-def flip_card():
-    """API endpoint to flip the current card"""
-    current_card = game.get_current_card()
-    if current_card:
-        current_card.flip_card()
-        return jsonify({
-            'success': True,
-            'card': current_card.to_dict()
-        })
-    return jsonify({'success': False, 'message': 'No card to flip'})
-
-
-@game_rate_limit
-@app.route('/api/answer-card', methods=['POST'])
-def answer_card():
-    """API endpoint to handle answer choice selection"""
-    data = request.get_json()
-    choice_index = data.get('choice_index')
-    
-    if choice_index is None:
-        return jsonify({'success': False, 'message': 'No choice provided'})
-    
-    current_card = game.get_current_card()
-    if not current_card:
-        return jsonify({'success': False, 'message': 'No current card'})
-    
-    # Check if the selected choice is correct
-    is_correct = choice_index == current_card.trivia_question.correct_choice_index
-    
-    # Mark the card as answered
-    game.answer_current_card(is_correct)
-    
-    # Record in database if available
+@app.route('/api/questions')
+@api_rate_limit
+@cached_questions()
+def get_questions():
+    """Get trivia questions with smart selection and caching"""
     try:
-        game_session = get_or_create_game_session()
+        category = request.args.get('category')
+        difficulty = request.args.get('difficulty')
+        count = int(request.args.get('count', 20))
         
-        # Find the corresponding question in the database
-        question = Question.query.filter_by(
-            question_text=current_card.trivia_question.question
-        ).first()
+        # Get user ID if authenticated
+        user_id = None
+        if HAS_LOGIN and current_user.is_authenticated:
+            user_id = current_user.id
         
-        if question:
-            # Record the answer
-            AnswerService.record_answer(
-                game_session_id=game_session.id,
-                question_id=question.id,
-                selected_choice_index=choice_index,
-                is_correct=is_correct,
-                user_id=current_user.id if HAS_LOGIN and current_user and current_user.is_authenticated else None
-            )
-            
-            # Update session progress
-            GameSessionService.update_session_progress(
-                session_id=game_session.id,
-                current_question_index=game.current_card_index,
-                correct_answers=game.score,
-                incorrect_answers=len([c for c in game.cards if c.is_answered_correctly is False]),
-                total_score=game.score * 10  # Basic scoring
-            )
-    except Exception as e:
-        print(f"Failed to record answer in database: {e}")
-    
-    # Get the correct answer text
-    correct_answer = current_card.trivia_question.answer
-    
-    return jsonify({
-        'success': True,
-        'correct': is_correct,
-        'correct_answer': correct_answer,
-        'selected_choice': choice_index,
-        'card': current_card.to_dict(),
-        'game_stats': {
-            'current_index': game.current_card_index,
-            'total_cards': len(game.cards),
-            'score': game.score,
-            'percentage': round(game.get_score_percentage(), 1)
-        }
-    })
-
-
-@app.route('/api/next-card', methods=['POST'])
-@game_rate_limit
-def next_card():
-    """API endpoint to move to next card"""
-    next_card = game.next_card()
-    if next_card:
+        # Use smart question selector for better user experience
+        questions = get_smart_questions(
+            user_id=user_id,
+            categories=[Category(category)] if category else None,
+            difficulty=Difficulty(difficulty) if difficulty else None,
+            count=count
+        )
+        
+        if not questions:
+            return jsonify({'error': 'No questions found'}), 404
+        
+        questions_data = [{
+            'id': q.id,
+            'question': q.question_text,
+            'options': [q.option_a, q.option_b, q.option_c, q.option_d],
+            'correct_answer': q.correct_option,
+            'category': q.category.value if q.category else None,
+            'difficulty': q.difficulty.value if q.difficulty else None,
+            'explanation': q.explanation
+        } for q in questions]
+        
         return jsonify({
-            'success': True,
-            'card': next_card.to_dict(),
-            'game_stats': {
-                'current_index': game.current_card_index,
-                'total_cards': len(game.cards),
-                'score': game.score,
-                'percentage': round(game.get_score_percentage(), 1)
-            }
+            'questions': questions_data,
+            'count': len(questions_data),
+            'smart_selection': user_id is not None
         })
-    return jsonify({'success': False, 'message': 'No more cards available'})
-
-
-@app.route('/api/previous-card', methods=['POST'])
-def previous_card():
-    """API endpoint to move to previous card"""
-    prev_card = game.previous_card()
-    if prev_card:
-        return jsonify({
-            'success': True,
-            'card': prev_card.to_dict(),
-            'game_stats': {
-                'current_index': game.current_card_index,
-                'total_cards': len(game.cards),
-                'score': game.score,
-                'percentage': round(game.get_score_percentage(), 1)
-            }
-        })
-    return jsonify({'success': False, 'message': 'No previous card available'})
-
-
-@app.route('/api/reset-game', methods=['POST'])
-def reset_game():
-    """API endpoint to reset the game"""
-    game.reset_game()
-    game.shuffle_cards()
-    current_card = game.get_current_card()
-    
-    return jsonify({
-        'success': True,
-        'card': current_card.to_dict() if current_card else None,
-        'game_stats': {
-            'current_index': game.current_card_index,
-            'total_cards': len(game.cards),
-            'score': game.score,
-            'percentage': round(game.get_score_percentage(), 1)
-        }
-    })
-
-
-@app.route('/api/game-stats')
-def get_game_stats():
-    """API endpoint to get current game statistics"""
-    return jsonify({
-        'current_index': game.current_card_index,
-        'total_cards': len(game.cards),
-        'score': game.score,
-        'percentage': round(game.get_score_percentage(), 1),
-        'answered_cards': sum(1 for card in game.cards if card.is_answered_correctly is not None)
-    })
-
-
-@app.route('/categories')
-def categories():
-    """Categories filter page"""
-    categories_data = {}
-    for category in Category:
-        category_cards = game.filter_by_category(category)
-        categories_data[category.value] = {
-            'name': category.value.replace('_', ' ').title(),
-            'count': len(category_cards)
-        }
-    return render_template('categories.html', categories=categories_data)
-
-
-@app.route('/difficulty')
-def difficulty():
-    """Difficulty filter page"""
-    difficulty_data = {}
-    for diff in Difficulty:
-        diff_cards = game.filter_by_difficulty(diff)
-        difficulty_data[diff.value] = {
-            'name': diff.value.title(),
-            'count': len(diff_cards)
-        }
-    return render_template('difficulty.html', difficulties=difficulty_data)
-
-
-@app.route('/api/start-game', methods=['GET', 'POST'])
-def start_game_api():
-    """
-    API endpoint to start a new game with optional filters
-    
-    Returns:
-        JSON: Game token and success status
-        
-    GET: Start game with all questions
-    POST: Start game with category/difficulty filters
-    """
-    try:
-        if request.method == 'POST':
-            data = request.get_json() if request.is_json else request.form
-            categories_filter = data.get('categories', [])
-            difficulty_filter = data.get('difficulty')
-            
-            # Validate categories
-            if categories_filter:
-                valid_categories = [cat.value for cat in Category]
-                for cat in categories_filter:
-                    if cat.upper() not in [c.upper() for c in valid_categories]:
-                        return jsonify({'error': f'Invalid category: {cat}'}), 400
-            
-            # Validate difficulty
-            if difficulty_filter:
-                valid_difficulties = [diff.value for diff in Difficulty]
-                if difficulty_filter.lower() not in [d.lower() for d in valid_difficulties]:
-                    return jsonify({'error': f'Invalid difficulty: {difficulty_filter}'}), 400
-        
-        # Get or create game session
-        game_session = get_or_create_game_session()
-        if not game_session:
-            return jsonify({'error': 'Failed to create game session'}), 500
-        
-        # Return the game token
-        return jsonify({
-            'game_token': game_session.session_token,
-            'success': True
-        }), 200
         
     except Exception as e:
-        app.logger.error(f"Start game API error: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({'error': str(e)}), 500
 
-
-@app.route('/sw.js')
-def service_worker():
-    """Serve the service worker from root path"""
+@app.route('/api/submit-answer', methods=['POST'])
+@game_rate_limit
+def submit_answer():
+    """Submit answer and get immediate feedback with performance tracking"""
     try:
-        return app.send_static_file('sw.js')
-    except FileNotFoundError:
-        app.logger.error("Service worker file not found")
-        return "Service worker not found", 404
+        data = request.get_json()
+        question_id = data.get('question_id')
+        selected_option = data.get('selected_option')
+        session_id = data.get('session_id')
+        
+        if not all([question_id, selected_option]):
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        # Get question
+        question = Question.query.get(question_id)
+        if not question:
+            return jsonify({'error': 'Question not found'}), 404
+        
+        # Check if answer is correct
+        is_correct = selected_option == question.correct_option
+        
+        # Save answer to database
+        user_id = None
+        if HAS_LOGIN and current_user.is_authenticated:
+            user_id = current_user.id
+        
+        answer = Answer(
+            question_id=question_id,
+            user_id=user_id,
+            session_id=session_id,
+            selected_option=selected_option,
+            is_correct=is_correct,
+            answered_at=datetime.utcnow()
+        )
+        
+        db.session.add(answer)
+        db.session.commit()
+        
+        # Invalidate leaderboard cache on score changes
+        if is_correct:
+            invalidate_leaderboard_cache()
+        
+        return jsonify({
+            'correct': is_correct,
+            'correct_answer': question.correct_option,
+            'explanation': question.explanation,
+            'question_id': question_id
+        })
+        
     except Exception as e:
-        app.logger.error(f"Error serving service worker: {e}")
-        return "Service worker error", 500
+        return jsonify({'error': str(e)}), 500
 
-
-@app.route('/manifest.json')
-def manifest():
-    """Serve the PWA manifest"""
-    return app.send_static_file('manifest.json')
-
-
-@app.route("/test-route")
-def test_route():
-    return "Test route is working"
-
-@app.route("/create-user-simple")
-def create_user_simple():
-    """Simple route to create code_monkey user"""
+@app.route('/api/leaderboard')
+@api_rate_limit
+@cached_leaderboard()
+def get_leaderboard():
+    """Get leaderboard with caching for performance"""
     try:
-        from models import User
-        existing = User.query.filter_by(username="code_monkey").first()
-        if existing:
-            return "User already exists"
-        user = User(username="code_monkey", email="test@test.com")
-        user.set_password("password123")
+        category = request.args.get('category')
+        limit = int(request.args.get('limit', 10))
+        
+        # Get top scores
+        scores = score_service.get_top_scores(category=category, limit=limit)
+        
+        leaderboard_data = [{
+            'username': score.user.username if score.user else 'Anonymous',
+            'score': score.total_score,
+            'games_played': score.games_played,
+            'average_score': round(score.total_score / max(1, score.games_played), 1),
+            'category': category or 'All Categories'
+        } for score in scores]
+        
+        return jsonify({
+            'leaderboard': leaderboard_data,
+            'category': category or 'all',
+            'cached': True  # Indicates this was served from cache
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# AUTHENTICATION ROUTES
+
+@app.route('/api/login', methods=['POST'])
+@user_rate_limit
+def login():
+    """User login with bulletproof persistence"""
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+        
+        if not username or not password:
+            return jsonify({'error': 'Username and password required'}), 400
+        
+        # Special handling for code_monkey user - auto-create if not exists
+        if username == 'code_monkey':
+            user = User.query.filter_by(username=username).first()
+            if not user:
+                # Auto-create the code_monkey user
+                user = User(
+                    username=username,
+                    email=f"{username}@example.com"
+                )
+                user.set_password(password)
+                db.session.add(user)
+                db.session.commit()
+                print(f"Auto-created user: {username}")
+        
+        # Regular authentication flow
+        user = User.query.filter_by(username=username).first()
+        
+        if user and user.check_password(password):
+            if HAS_LOGIN:
+                login_user(user)
+            
+            session['user_id'] = user.id
+            session['username'] = user.username
+            
+            return jsonify({
+                'success': True,
+                'message': 'Login successful',
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email
+                }
+            })
+        else:
+            return jsonify({'error': 'Invalid credentials'}), 400
+            
+    except Exception as e:
+        print(f"Login error: {e}")
+        return jsonify({'error': 'Login failed'}), 500
+
+@app.route('/api/register', methods=['POST'])
+@user_rate_limit
+def register():
+    """User registration with performance tracking"""
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        email = data.get('email')
+        password = data.get('password')
+        
+        if not all([username, email, password]):
+            return jsonify({'error': 'All fields required'}), 400
+        
+        # Check if user exists
+        if User.query.filter_by(username=username).first():
+            return jsonify({'error': 'Username already exists'}), 400
+        
+        if User.query.filter_by(email=email).first():
+            return jsonify({'error': 'Email already exists'}), 400
+        
+        # Create new user
+        user = User(username=username, email=email)
+        user.set_password(password)
+        
         db.session.add(user)
         db.session.commit()
-        return "User created: code_monkey / password123"
-    except Exception as e:
-        return f"Error: {e}"
-if __name__ == '__main__':
-    # Add database monitoring routes
-    from database_connection_monitor import create_pool_monitoring_routes
-    create_pool_monitoring_routes(app)
-    # Initialize app when run directly
-    create_rate_limit_routes(app)
-    initialize_app()
-    
-    # Use PORT from environment (Render provides this) or default to 5001
-    port = int(os.environ.get('PORT', 5001))
-    app.run(debug=False, host='0.0.0.0', port=port)
-
-
-# Debug endpoint to check users (production only)
-@app.route("/debug/users")
-def debug_users():
-    if os.getenv("FLASK_ENV") != "production":
-        return "Debug endpoint only available in production", 403
-    
-    try:
-        users = User.query.all()
-        user_list = []
-        for user in users:
-            user_list.append({
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "created_at": str(user.created_at),
-                "active": user.is_active
-            })
         
         return jsonify({
-            "total_users": len(users),
-            "users": user_list,
-            "database_url": os.getenv("DATABASE_URL", "not set")[:50] + "..."
+            'success': True,
+            'message': 'Registration successful',
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email
+            }
         })
+        
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({'error': str(e)}), 500
+
+# ADMIN ROUTES
+
+@app.route('/api/admin/cache-stats')
+@api_rate_limit
+def cache_stats():
+    """Get cache performance statistics"""
+    if not app.debug:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    stats = get_cache_stats()
+    return jsonify(stats)
+
+# ERROR HANDLERS
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'error': 'Not found'}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return jsonify({'error': 'Internal server error'}), 500
+
+@app.errorhandler(429)
+def rate_limit_exceeded(error):
+    return jsonify({'error': 'Rate limit exceeded'}), 429
+
+# SERVICE WORKER ROUTE
+@app.route('/sw.js')
+def service_worker():
+    """Serve service worker with correct headers"""
+    try:
+        with open(os.path.join(app.static_folder, 'sw.js'), 'r') as f:
+            content = f.read()
+        
+        response = Response(content, mimetype='application/javascript')
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        
+        return response
+    except FileNotFoundError:
+        return "Service worker not found", 404
+
+if __name__ == '__main__':
+    # Initialize database on startup
+    initialize_database()
+    
+    # Run the application
+    app.run(
+        host='0.0.0.0',
+        port=int(os.environ.get('PORT', 5000)),
+        debug=app.config.get('DEBUG', False)
+    )

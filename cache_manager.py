@@ -8,6 +8,13 @@ from functools import wraps
 import json
 import hashlib
 
+# Import performance monitoring for cache analytics
+try:
+    from performance_monitoring import performance_metrics
+    HAS_MONITORING = True
+except ImportError:
+    HAS_MONITORING = False
+
 class SimpleCache:
     """Simple in-memory cache with TTL support"""
     
@@ -21,14 +28,27 @@ class SimpleCache:
     
     def get(self, key: str) -> Optional[Any]:
         """Get value from cache"""
+        start_time = time.time()
+        
         if key in self.cache:
             entry = self.cache[key]
             if not self._is_expired(entry):
                 entry['hits'] += 1
+                
+                # Record cache hit
+                if HAS_MONITORING:
+                    response_time = time.time() - start_time
+                    performance_metrics.record_cache_hit('memory', key, response_time)
+                
                 return entry['value']
             else:
                 # Remove expired entry
                 del self.cache[key]
+        
+        # Record cache miss
+        if HAS_MONITORING:
+            performance_metrics.record_cache_miss('memory', key)
+        
         return None
     
     def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
@@ -93,15 +113,24 @@ def cached_questions(category=None, difficulty=None, limit=20):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
+            start_time = time.time()
+            cache_type = 'questions'
+            
             # Generate cache key
             cache_key = f"questions_{category}_{difficulty}_{limit}"
             
             # Try to get from cache
             cached_result = question_cache.get(cache_key)
             if cached_result is not None:
+                if HAS_MONITORING:
+                    response_time = time.time() - start_time
+                    performance_metrics.record_cache_hit(cache_type, cache_key, response_time)
                 return cached_result
             
-            # Execute function and cache result
+            # Cache miss - execute function and cache result
+            if HAS_MONITORING:
+                performance_metrics.record_cache_miss(cache_type, cache_key)
+            
             result = func(*args, **kwargs)
             question_cache.set(cache_key, result, ttl=600)  # 10 minutes
             
@@ -114,11 +143,21 @@ def cached_leaderboard(category=None, limit=10):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
+            start_time = time.time()
+            cache_type = 'leaderboard'
+            
             cache_key = f"leaderboard_{category}_{limit}"
             
             cached_result = leaderboard_cache.get(cache_key)
             if cached_result is not None:
+                if HAS_MONITORING:
+                    response_time = time.time() - start_time
+                    performance_metrics.record_cache_hit(cache_type, cache_key, response_time)
                 return cached_result
+            
+            # Cache miss
+            if HAS_MONITORING:
+                performance_metrics.record_cache_miss(cache_type, cache_key)
             
             result = func(*args, **kwargs)
             leaderboard_cache.set(cache_key, result, ttl=60)  # 1 minute
