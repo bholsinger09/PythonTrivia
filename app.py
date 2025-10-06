@@ -20,7 +20,6 @@ import os
 from datetime import datetime, timezone
 
 # Import both old and new models for compatibility
-from src.models import TriviaGame, TriviaQuestion
 from models import db, User, Question, GameSession, Answer, Score, Category, Difficulty, UserBackup
 from config import DevelopmentConfig, ProductionConfig, TestingConfig
 from db_service import (
@@ -39,7 +38,7 @@ from rate_limiter import (
     api_rate_limit, game_rate_limit, user_rate_limit, 
     create_rate_limit_routes
 )
-from database_connection_monitor import create_pool_monitoring_routes
+from scripts.database_connection_monitor import create_pool_monitoring_routes
 
 try:
     from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -95,10 +94,6 @@ def initialize_database():
         print(f"Database initialization error: {e}")
         raise
 
-@app.before_first_request
-def create_tables():
-    """Create database tables on first request"""
-    initialize_database()
 
 # MAIN ROUTES
 

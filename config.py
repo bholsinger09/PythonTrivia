@@ -55,7 +55,6 @@ class DevelopmentConfig(Config):
         'connect_args': {
             'timeout': 20,
             'check_same_thread': False,  # SQLite specific
-            'application_name': 'PythonTriviaApp-Dev'
         }
     }
     
