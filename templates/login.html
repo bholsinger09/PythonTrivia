@@ -64,9 +64,19 @@
                 submitBtn.disabled = true;
 
                 try {
-                    const response = await fetch('/login', {
+                    // Convert FormData to JSON for API call
+                    const formData = new FormData(loginForm);
+                    const jsonData = {
+                        username: formData.get('username'),
+                        password: formData.get('password')
+                    };
+                    
+                    const response = await fetch('/api/login', {
                         method: 'POST',
-                        body: formData
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(jsonData)
                     });
 
                     const result = await response.json();
