@@ -88,7 +88,7 @@ def initialize_database():
     """Initialize database with smart migration support"""
     try:
         with app.app_context():
-            smart_database_init(app, db)
+            smart_database_init(preserve_users=True)
             print("Database initialized successfully")
     except Exception as e:
         print(f"Database initialization error: {e}")
