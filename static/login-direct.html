@@ -129,10 +129,18 @@
                     messageDiv.className = 'message success';
                     messageDiv.style.display = 'block';
                     
-                    // Redirect to home page after 2 seconds
+                    // Store user info in localStorage for the frontend
+                    localStorage.setItem('currentUser', JSON.stringify(result.user));
+                    localStorage.setItem('isLoggedIn', 'true');
+                    localStorage.setItem('loginTime', new Date().toISOString());
+                    
+                    // Also try to set a simple flag that the main page can check
+                    sessionStorage.setItem('justLoggedIn', 'true');
+                    
+                    // Redirect to home page after 1.5 seconds
                     setTimeout(() => {
                         window.location.href = '/';
-                    }, 2000);
+                    }, 1500);
                 } else {
                     messageDiv.textContent = result.error || 'Login failed';
                     messageDiv.className = 'message error';
