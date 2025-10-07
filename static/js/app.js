@@ -1,174 +1,66 @@
-// Main application JavaScript
-class TriviaApp {
-    constructor() {
-        this.init();
-    }
-
-    init() {
-        // Add smooth scrolling for navigation links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth'
-                    });
-                }
-            });
-        });
-
-        // Add loading states to buttons
-        this.setupButtonLoading();
-
-        // Initialize any global event listeners
-        this.setupGlobalListeners();
-    }
-
-    setupButtonLoading() {
-        document.querySelectorAll('.btn').forEach(button => {
-            button.addEventListener('click', function () {
-                if (!this.disabled) {
-                    this.classList.add('loading');
-                    setTimeout(() => {
-                        this.classList.remove('loading');
-                    }, 1000);
-                }
-            });
-        });
-    }
-
-    setupGlobalListeners() {
-        // Add keyboard navigation support
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                // Handle escape key globally
-                this.handleEscape();
-            }
-        });
-
-        // Add responsive navigation toggle for mobile
-        this.setupMobileNavigation();
-    }
-
-    setupMobileNavigation() {
-        // This would be expanded for mobile menu functionality
-        const navbar = document.querySelector('.navbar');
-        let lastScrollTop = 0;
-
-        window.addEventListener('scroll', () => {
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-
-            if (scrollTop > lastScrollTop && scrollTop > 100) {
-                // Scrolling down
-                navbar.style.transform = 'translateY(-100%)';
-            } else {
-                // Scrolling up
-                navbar.style.transform = 'translateY(0)';
-            }
-
-            lastScrollTop = scrollTop;
-        });
-    }
-
-    handleEscape() {
-        // Close any open modals or overlays
-        const activeElements = document.querySelectorAll('.active, .open');
-        activeElements.forEach(element => {
-            element.classList.remove('active', 'open');
-        });
-    }
-
-    // Utility function for making API calls
-    async makeApiCall(url, options = {}) {
-        try {
-            const response = await fetch(url, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...options.headers
-                },
-                ...options
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error('API call failed:', error);
-            this.showNotification('An error occurred. Please try again.', 'error');
-            throw error;
-        }
-    }
-
-    // Show notification messages
-    showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.textContent = message;
-
-        // Style the notification
-        Object.assign(notification.style, {
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            color: 'white',
-            fontWeight: '500',
-            zIndex: '9999',
-            transform: 'translateX(100%)',
-            transition: 'transform 0.3s ease'
-        });
-
-        // Set background color based on type
-        const colors = {
-            success: '#10b981',
-            error: '#ef4444',
-            warning: '#f59e0b',
-            info: '#3b82f6'
-        };
-        notification.style.backgroundColor = colors[type] || colors.info;
-
-        document.body.appendChild(notification);
-
-        // Animate in
-        setTimeout(() => {
-            notification.style.transform = 'translateX(0)';
-        }, 100);
-
-        // Auto remove after 3 seconds
-        setTimeout(() => {
-            notification.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
-        }, 3000);
-    }
-
-    // Add loading state to an element
-    setLoading(element, isLoading) {
+// Main Application JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Python Trivia app loaded');
+    
+    // Global error handler for fetch requests
+    window.handleFetchError = function(error, fallbackMessage = 'An error occurred') {
+        console.error('Fetch error:', error);
+        return fallbackMessage;
+    };
+    
+    // Global success handler for operations
+    window.showSuccessMessage = function(message, duration = 3000) {
+        console.log('Success:', message);
+        // You can implement a toast notification system here
+    };
+    
+    // Global loading state manager
+    window.setLoadingState = function(element, isLoading) {
+        if (!element) return;
+        
         if (isLoading) {
-            element.classList.add('loading');
             element.disabled = true;
+            element.classList.add('loading');
         } else {
-            element.classList.remove('loading');
             element.disabled = false;
+            element.classList.remove('loading');
         }
-    }
-}
-
-// Initialize the app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    if (!window.triviaApp) {
-        window.triviaApp = new TriviaApp();
-    }
+    };
+    
+    // Utility function to validate form data
+    window.validateForm = function(formElement) {
+        const inputs = formElement.querySelectorAll('input[required]');
+        let isValid = true;
+        
+        inputs.forEach(input => {
+            if (!input.value.trim()) {
+                isValid = false;
+                input.classList.add('error');
+            } else {
+                input.classList.remove('error');
+            }
+        });
+        
+        return isValid;
+    };
+    
+    // Clear form validation errors on input
+    document.addEventListener('input', function(e) {
+        if (e.target.matches('input.error')) {
+            e.target.classList.remove('error');
+        }
+    });
 });
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = TriviaApp;
+// Service Worker Registration (if supported)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+                console.log('SW registered: ', registration);
+            })
+            .catch(function(registrationError) {
+                console.log('SW registration failed: ', registrationError);
+            });
+    });
 }
