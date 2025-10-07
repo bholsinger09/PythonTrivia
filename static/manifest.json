@@ -15,7 +15,10 @@
             "purpose": "any maskable"
         }
     ],
-    "categories": ["education", "games"],
+    "categories": [
+        "education",
+        "games"
+    ],
     "lang": "en-US",
     "scope": "/",
     "id": "python-trivia-app"
