@@ -244,11 +244,44 @@ def smart_database_init(preserve_users: bool = True) -> None:
             logger.info("Restoring user data from database backup...")
             user_data_manager.restore_users()
         
+        # Ensure code_monkey user exists with standard password
+        create_default_users()
+        
         logger.info("Smart database initialization completed with deployment-compatible persistence")
         
     except Exception as e:
         logger.error(f"Smart database initialization failed: {e}")
         raise
+
+
+def create_default_users() -> None:
+    """Create default users like code_monkey if they don't exist"""
+    try:
+        # Check if code_monkey user exists
+        code_monkey = User.query.filter_by(username='code_monkey').first()
+        
+        if not code_monkey:
+            # Create code_monkey user with standard password
+            code_monkey = User(
+                username='code_monkey',
+                email='code_monkey@example.com'
+            )
+            code_monkey.set_password('password123')
+            db.session.add(code_monkey)
+            db.session.commit()
+            logger.info("Created default user: code_monkey")
+        else:
+            # Ensure code_monkey has the correct password
+            if not code_monkey.check_password('password123'):
+                code_monkey.set_password('password123')
+                db.session.commit()
+                logger.info("Reset password for existing user: code_monkey")
+            else:
+                logger.info("Default user code_monkey already exists with correct password")
+                
+    except Exception as e:
+        logger.error(f"Failed to create default users: {e}")
+        # Don't raise - this shouldn't break the initialization
 
 
 def get_user_backup_status() -> Dict:
