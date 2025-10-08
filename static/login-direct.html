@@ -149,10 +149,25 @@
                     // Also try to set a simple flag that the main page can check
                     sessionStorage.setItem('justLoggedIn', 'true');
 
-                    // Redirect to static home page after 1.5 seconds
+                    // DEBUG: Let's test what we stored immediately
+                    console.log('=== LOGIN DEBUG ===');
+                    console.log('Stored user:', localStorage.getItem('currentUser'));
+                    console.log('Is logged in:', localStorage.getItem('isLoggedIn'));
+                    console.log('Login time:', localStorage.getItem('loginTime'));
+                    
+                    // Show stored data in the message for debugging
                     setTimeout(() => {
-                        window.location.href = '/static/index-direct.html';
-                    }, 1500);
+                        const storedUser = JSON.parse(localStorage.getItem('currentUser'));
+                        messageDiv.innerHTML = `Login successful! Welcome ${result.user.username}<br>
+                        <small>Stored data: ${storedUser.username} (${storedUser.email})</small><br>
+                        <small>Storage test: isLoggedIn = ${localStorage.getItem('isLoggedIn')}</small>`;
+                    }, 500);
+
+                    // Redirect to static home page after 3 seconds (longer delay for debugging)
+                    setTimeout(() => {
+                        // Instead of redirecting, let's show the logged-in state right here
+                        showLoggedInInterface(result.user);
+                    }, 3000);
                 } else {
                     messageDiv.textContent = result.error || 'Login failed';
                     messageDiv.className = 'message error';
@@ -168,6 +183,92 @@
                 loginBtn.disabled = false;
             }
         });
+        
+        function showLoggedInInterface(user) {
+            // Replace the entire body content with a logged-in interface
+            document.body.innerHTML = `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; background-color: #f5f5f5;">
+                    <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <h1>🐍 Python Trivia - Welcome!</h1>
+                        
+                        <div style="background: #d4edda; padding: 15px; border-radius: 4px; margin: 20px 0; border: 1px solid #c3e6cb;">
+                            <strong>✅ Successfully logged in!</strong><br>
+                            Username: ${user.username}<br>
+                            Email: ${user.email}<br>
+                            User ID: ${user.id}
+                        </div>
+                        
+                        <div style="background: #e2e3e5; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                            <strong>🔍 Login State Test</strong><br>
+                            localStorage.currentUser: ${localStorage.getItem('currentUser') ? '✅ Set' : '❌ Not set'}<br>
+                            localStorage.isLoggedIn: ${localStorage.getItem('isLoggedIn')}<br>
+                            Data persists between page reloads: <span id="persistenceTest">Testing...</span>
+                        </div>
+                        
+                        <div style="margin: 20px 0;">
+                            <h3>🎮 Game Actions</h3>
+                            <button onclick="testLocalStorage()" style="padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                🔍 Test localStorage
+                            </button>
+                            <button onclick="startGame()" style="padding: 10px 20px; margin: 5px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                🎮 Start Game
+                            </button>
+                            <button onclick="logout()" style="padding: 10px 20px; margin: 5px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                🚪 Logout
+                            </button>
+                            <button onclick="goToMainSite()" style="padding: 10px 20px; margin: 5px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                🏠 Go to Main Site
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <script>
+                    // Test persistence immediately
+                    setTimeout(() => {
+                        const stored = localStorage.getItem('currentUser');
+                        const persistenceElement = document.getElementById('persistenceTest');
+                        if (stored) {
+                            persistenceElement.innerHTML = '✅ Yes - data is persisted';
+                            persistenceElement.style.color = 'green';
+                        } else {
+                            persistenceElement.innerHTML = '❌ No - data was lost';
+                            persistenceElement.style.color = 'red';
+                        }
+                    }, 100);
+                    
+                    function testLocalStorage() {
+                        const currentUser = localStorage.getItem('currentUser');
+                        const isLoggedIn = localStorage.getItem('isLoggedIn');
+                        const loginTime = localStorage.getItem('loginTime');
+                        
+                        alert('localStorage Contents:\\n\\n' +
+                              'currentUser: ' + (currentUser ? 'SET (' + currentUser.length + ' chars)' : 'NOT SET') + '\\n' +
+                              'isLoggedIn: ' + isLoggedIn + '\\n' +
+                              'loginTime: ' + loginTime + '\\n\\n' +
+                              'Full currentUser: ' + currentUser);
+                    }
+                    
+                    function startGame() {
+                        alert('Game functionality coming soon!\\n\\nYour login state is preserved and ready for game features.');
+                    }
+                    
+                    function logout() {
+                        localStorage.removeItem('currentUser');
+                        localStorage.removeItem('isLoggedIn');
+                        localStorage.removeItem('loginTime');
+                        sessionStorage.clear();
+                        
+                        alert('Logged out successfully!');
+                        window.location.reload();
+                    }
+                    
+                    function goToMainSite() {
+                        window.location.href = '/';
+                    }
+                <\/script>
+            `;
+        }
     </script>
 </body>
 
