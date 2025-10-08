@@ -94,7 +94,6 @@ def initialize_database():
         print(f"Database initialization error: {e}")
         raise
 
-
 # MAIN ROUTES
 
 @app.route('/')
@@ -396,6 +395,65 @@ def service_worker():
     except FileNotFoundError:
         return "Service worker not found", 404
 
+
+@app.route('/simple-debug')
+def simple_debug():
+    """Simple debug endpoint to check deployment and route registration"""
+    from datetime import datetime
+    routes = []
+    for rule in app.url_map.iter_rules():
+        routes.append(str(rule.rule))
+    
+    return jsonify({
+        'message': 'Simple debug working on Render',
+        'timestamp': datetime.now().isoformat(),
+        'total_routes': len(routes),
+        'has_login_route': '/login' in routes,
+        'sample_routes': sorted(routes)[:15],
+        'login_routes': [r for r in routes if 'login' in r.lower()],
+        'debug_routes': [r for r in routes if 'debug' in r.lower()],
+        'deployment_info': {
+            'version': 'simple-debug-v1',
+            'flask_debug': app.debug,
+            'flask_env': app.config.get('ENV', 'not-set')
+        }
+    })
+
+
+@app.route('/deployment-check')
+def deployment_check():
+    """Comprehensive deployment debugging endpoint"""
+    from datetime import datetime
+    import os
+    
+    routes = []
+    for rule in app.url_map.iter_rules():
+        routes.append({
+            'rule': str(rule.rule),
+            'endpoint': rule.endpoint,
+            'methods': list(rule.methods)
+        })
+    
+    return jsonify({
+        'status': 'deployment-check-working',
+        'timestamp': datetime.now().isoformat(),
+        'environment': {
+            'FLASK_ENV': os.environ.get('FLASK_ENV', 'not-set'),
+            'FLASK_DEBUG': os.environ.get('FLASK_DEBUG', 'not-set'),
+            'PORT': os.environ.get('PORT', 'not-set'),
+            'RENDER': os.environ.get('RENDER', 'not-set')
+        },
+        'flask_config': {
+            'DEBUG': app.debug,
+            'ENV': app.config.get('ENV', 'not-set'),
+            'SECRET_KEY_SET': bool(app.config.get('SECRET_KEY'))
+        },
+        'route_analysis': {
+            'total_routes': len(routes),
+            'routes': routes
+        }
+    })
+
 if __name__ == '__main__':
     # Initialize database on startup
     initialize_database()
@@ -589,6 +647,39 @@ def save_score():
         'message': 'Score saved successfully!'
     })
 
+
+    """Comprehensive deployment debugging endpoint"""
+    from datetime import datetime
+    import os
+    
+    routes = []
+    for rule in app.url_map.iter_rules():
+        routes.append({
+            'rule': str(rule.rule),
+            'endpoint': rule.endpoint,
+            'methods': list(rule.methods)
+        })
+    
+    return jsonify({
+        'status': 'deployment-check-working',
+        'timestamp': datetime.now().isoformat(),
+        'environment': {
+            'FLASK_ENV': os.environ.get('FLASK_ENV', 'not-set'),
+            'FLASK_DEBUG': os.environ.get('FLASK_DEBUG', 'not-set'),
+            'PORT': os.environ.get('PORT', 'not-set'),
+            'RENDER': os.environ.get('RENDER', 'not-set')
+        },
+        'flask_config': {
+            'DEBUG': app.debug,
+            'ENV': app.config.get('ENV', 'not-set'),
+            'SECRET_KEY_SET': bool(app.config.get('SECRET_KEY'))
+        },
+        'route_analysis': {
+            'total_routes': len(routes),
+            'routes': routes
+        }
+    })
+
 if __name__ == '__main__':
     # Initialize database on startup
     initialize_database()
@@ -600,7 +691,6 @@ if __name__ == '__main__':
         debug=app.config.get('DEBUG', False)
     )
 # TEMPORARY ROUTES FOR TESTING
-
 
 # WEB ROUTES FOR TESTING COMPATIBILITY
 
@@ -645,43 +735,8 @@ def start_game_api():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
-
 @app.route('/api/me', methods=['GET'])
 @user_rate_limit
-def check_session():
-    """Check current user session status"""
-    try:
-        # Check if user is logged in via session
-        user_id = session.get('user_id')
-        username = session.get('username')
-        
-        if user_id and username:
-            # Verify user still exists in database
-            user = User.query.get(user_id)
-            if user:
-                return jsonify({
-                    'success': True,
-                    'authenticated': True,
-                    'user': {
-                        'id': user.id,
-                        'username': user.username,
-                        'email': user.email
-                    }
-                })
-        
-        return jsonify({
-            'success': True,
-            'authenticated': False,
-            'user': None
-        }), 401
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/session-check')  # Added missing route decorator
-@user_rate_limit
-@track_request_performance
 def check_session():
     """Check current user session status"""
     try:
@@ -736,7 +791,6 @@ def logout_api():
         return jsonify({'error': str(e)}), 500
 @app.route('/api/seed-questions', methods=['POST'])
 @user_rate_limit  
-@track_request_performance
 def seed_basic_questions():
     """Seed database with basic Python questions for testing"""
     try:
@@ -780,42 +834,6 @@ def seed_basic_questions():
             'success': True,
             'message': f'Successfully seeded {created_count} questions',
             'created': created_count
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-@app.route('/api/seed-questions', methods=['POST'])
-@user_rate_limit  
-@track_request_performance
-def seed_basic_questions():
-    """Seed database with basic Python questions for testing"""
-    try:
-        # Check if questions already exist
-        existing_questions = Question.query.count()
-        if existing_questions > 0:
-            return jsonify({
-                'message': f'Database already has {existing_questions} questions',
-                'skipped': True
-            })
-        
-        # Basic Python question
-        question = Question(
-            question_text='What is the output of print(2 ** 3)?',
-            choices=json.dumps(['6', '8', '9', '12']),
-            correct_answer='8',
-            difficulty=Difficulty('Easy'),
-            category=Category('Basic Syntax'),
-            explanation='2 ** 3 means 2 to the power of 3, which equals 8.',
-            is_active=True
-        )
-        db.session.add(question)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Successfully seeded 1 question',
-            'created': 1
         })
         
     except Exception as e:
