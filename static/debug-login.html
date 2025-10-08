@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Debug - Python Trivia</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .debug-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+        }
+        button:hover { background-color: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="debug-box">
+        <h1>🐍 Login State Debug Tool</h1>
+        <p>This page helps debug login state issues.</p>
+        
+        <div id="status"></div>
+        
+        <button onclick="checkLoginState()">Check Login State</button>
+        <button onclick="clearLoginData()">Clear All Login Data</button>
+        <button onclick="testLogin()">Test Login API</button>
+        <button onclick="testSession()">Test Session API</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function showResults(data) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `<h3>Debug Results:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+
+        function checkLoginState() {
+            showStatus('Checking login state...', 'info');
+            
+            const loginData = {
+                localStorage: {
+                    currentUser: localStorage.getItem('currentUser'),
+                    isLoggedIn: localStorage.getItem('isLoggedIn'),
+                    loginTime: localStorage.getItem('loginTime')
+                },
+                sessionStorage: {
+                    justLoggedIn: sessionStorage.getItem('justLoggedIn')
+                },
+                parsed: null
+            };
+
+            try {
+                if (loginData.localStorage.currentUser) {
+                    loginData.parsed = JSON.parse(loginData.localStorage.currentUser);
+                }
+            } catch (e) {
+                loginData.parseError = e.message;
+            }
+
+            showResults(loginData);
+
+            if (loginData.localStorage.isLoggedIn === 'true' && loginData.parsed) {
+                showStatus(`✅ User is logged in as: ${loginData.parsed.username}`, 'success');
+            } else {
+                showStatus('❌ User is not logged in', 'error');
+            }
+        }
+
+        function clearLoginData() {
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('loginTime');
+            sessionStorage.removeItem('justLoggedIn');
+            showStatus('✅ All login data cleared', 'success');
+            showResults({ message: 'All storage cleared' });
+        }
+
+        async function testLogin() {
+            showStatus('Testing login API...', 'info');
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        username: 'gametest',
+                        password: 'test123'
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showStatus('✅ Login API successful', 'success');
+                    
+                    // Store the login data like the real login page does
+                    localStorage.setItem('currentUser', JSON.stringify(result.user));
+                    localStorage.setItem('isLoggedIn', 'true');
+                    localStorage.setItem('loginTime', new Date().toISOString());
+                    sessionStorage.setItem('justLoggedIn', 'true');
+                    
+                    showResults({ loginResponse: result, stored: 'Login data stored in localStorage' });
+                } else {
+                    showStatus('❌ Login failed: ' + (result.error || 'Unknown error'), 'error');
+                    showResults(result);
+                }
+            } catch (error) {
+                showStatus('❌ Network error: ' + error.message, 'error');
+                showResults({ error: error.message });
+            }
+        }
+
+        async function testSession() {
+            showStatus('Testing session API...', 'info');
+            
+            try {
+                const response = await fetch('/api/me', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+                showResults({ sessionResponse: result, status: response.status });
+
+                if (response.ok && result.authenticated) {
+                    showStatus('✅ Session API shows user logged in', 'success');
+                } else {
+                    showStatus('❌ Session API shows user not logged in', 'error');
+                }
+            } catch (error) {
+                showStatus('❌ Session API error: ' + error.message, 'error');
+                showResults({ error: error.message });
+            }
+        }
+
+        // Auto-check on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginState();
+        });
+    </script>
+</body>
+</html>
