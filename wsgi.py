@@ -25,8 +25,9 @@ if __name__ != "__main__":
 # WSGI application
 application = app
 
-if __name__ == "__main__":
-    # For direct execution
-    port = int(os.environ.get('PORT', 5000))
-    print(f"🚀 Direct execution: Starting on port {port}")
-    app.run(host='0.0.0.0', port=port)
+# REMOVED: Direct execution to prevent conflicts with gunicorn
+# if __name__ == "__main__":
+#     # For direct execution
+#     port = int(os.environ.get('PORT', 5000))
+#     print(f"🚀 Direct execution: Starting on port {port}")
+#     app.run(host='0.0.0.0', port=port)
