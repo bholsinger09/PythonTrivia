@@ -647,8 +647,39 @@ def start_game_api():
 
 
 
-
 @app.route('/api/me', methods=['GET'])
+@user_rate_limit
+@track_request_performance
+def check_session():
+    """Check current user session status"""
+    try:
+        # Check if user is logged in via session
+        user_id = session.get('user_id')
+        username = session.get('username')
+        
+        if user_id and username:
+            # Verify user still exists in database
+            user = User.query.get(user_id)
+            if user:
+                return jsonify({
+                    'success': True,
+                    'authenticated': True,
+                    'user': {
+                        'id': user.id,
+                        'username': user.username,
+                        'email': user.email
+                    }
+                })
+        
+        return jsonify({
+            'success': True,
+            'authenticated': False,
+            'user': None
+        }), 401
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @user_rate_limit
 @track_request_performance
 def check_session():
