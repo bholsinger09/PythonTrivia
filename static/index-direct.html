@@ -233,7 +233,7 @@ Click OK and check browser console for more details.`);
             sessionStorage.clear();
 
             // Also call logout API if available
-            fetch('/api/logout', {
+            fetch(window.location.origin + '/api/logout', {
                 method: 'POST',
                 credentials: 'include'
             }).finally(() => {
