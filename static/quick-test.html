@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Login Test - Python Trivia</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin: 20px 0; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>🐍 Quick Login Test</h1>
+        <p>This page tests the complete login flow and localStorage persistence.</p>
+        
+        <div>
+            <input type="text" id="username" placeholder="Username" value="gametest">
+            <input type="password" id="password" placeholder="Password" value="test123">
+            <button onclick="quickLogin()">Quick Login</button>
+        </div>
+        
+        <div id="results"></div>
+        
+        <div>
+            <button onclick="checkStorage()">Check Storage</button>
+            <button onclick="clearStorage()">Clear Storage</button>
+            <button onclick="testPersistence()">Test Persistence</button>
+        </div>
+    </div>
+
+    <script>
+        function showResult(message, isSuccess = true) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `<div class="box ${isSuccess ? 'success' : 'error'}">${message}</div>`;
+        }
+
+        async function quickLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            showResult('Logging in...', true);
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Store exactly like the real login page
+                    localStorage.setItem('currentUser', JSON.stringify(result.user));
+                    localStorage.setItem('isLoggedIn', 'true');
+                    localStorage.setItem('loginTime', new Date().toISOString());
+                    sessionStorage.setItem('justLoggedIn', 'true');
+
+                    showResult(`✅ Login Successful!<br>
+                        User: ${result.user.username} (${result.user.email})<br>
+                        <strong>Testing localStorage immediately...</strong><br>
+                        currentUser: ${localStorage.getItem('currentUser') ? '✅ STORED' : '❌ NOT STORED'}<br>
+                        isLoggedIn: ${localStorage.getItem('isLoggedIn')}<br>
+                        <br><strong>This data should persist when you navigate to other pages!</strong>`, true);
+                } else {
+                    showResult(`❌ Login failed: ${result.error}`, false);
+                }
+            } catch (error) {
+                showResult(`❌ Network error: ${error.message}`, false);
+            }
+        }
+
+        function checkStorage() {
+            const currentUser = localStorage.getItem('currentUser');
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            const loginTime = localStorage.getItem('loginTime');
+            const justLoggedIn = sessionStorage.getItem('justLoggedIn');
+
+            let message = '<strong>🔍 Current Storage Contents:</strong><br>';
+            message += `currentUser: ${currentUser ? '✅ SET (' + currentUser.length + ' chars)' : '❌ NOT SET'}<br>`;
+            message += `isLoggedIn: ${isLoggedIn || '❌ NOT SET'}<br>`;
+            message += `loginTime: ${loginTime || '❌ NOT SET'}<br>`;
+            message += `justLoggedIn (session): ${justLoggedIn || '❌ NOT SET'}<br>`;
+
+            if (currentUser) {
+                try {
+                    const user = JSON.parse(currentUser);
+                    message += `<br><strong>Parsed User:</strong><br>`;
+                    message += `Username: ${user.username}<br>`;
+                    message += `Email: ${user.email}<br>`;
+                    message += `ID: ${user.id}`;
+                } catch (e) {
+                    message += `<br>❌ ERROR parsing user data: ${e.message}`;
+                }
+            }
+
+            showResult(message, currentUser && isLoggedIn === 'true');
+        }
+
+        function clearStorage() {
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('loginTime');
+            sessionStorage.removeItem('justLoggedIn');
+            showResult('✅ All storage cleared', true);
+        }
+
+        function testPersistence() {
+            // Set test data
+            localStorage.setItem('testKey', 'testValue');
+            
+            // Check immediately
+            const immediate = localStorage.getItem('testKey');
+            
+            // Check after delay
+            setTimeout(() => {
+                const delayed = localStorage.getItem('testKey');
+                showResult(`🧪 Persistence Test:<br>
+                    Immediate: ${immediate ? '✅ Found' : '❌ Lost'}<br>
+                    After 1s: ${delayed ? '✅ Found' : '❌ Lost'}<br>
+                    <br>LocalStorage is ${delayed ? 'working correctly' : 'not working properly'}`, delayed === 'testValue');
+                
+                localStorage.removeItem('testKey');
+            }, 1000);
+        }
+
+        // Auto-check storage on page load
+        window.addEventListener('load', checkStorage);
+    </script>
+</body>
+</html>
