@@ -748,3 +748,19 @@ def seed_basic_questions():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+
+# Startup configuration for Render deployment
+if __name__ == '__main__':
+    import os
+    port = int(os.environ.get('PORT', 5000))
+    
+    # Initialize database on startup
+    initialize_database()
+    
+    # Run the application
+    app.run(
+        host='0.0.0.0',
+        port=port,
+        debug=False
+    )
