@@ -260,18 +260,9 @@
                         localStorage.removeItem('loginTime');
                         sessionStorage.clear();
                         
-                        // Also call logout API to clear server session
-                        fetch(window.location.origin + '/api/logout', {
-                            method: 'POST',
-                            credentials: 'include'
-                        }).then(() => {
-                            alert('Logged out successfully!');
-                            window.location.reload();
-                        }).catch(() => {
-                            // Even if API fails, we cleared localStorage
-                            alert('Logged out successfully!');
-                            window.location.reload();
-                        });
+                        // Simple logout without API call (API endpoint has issues)
+                        alert('Logged out successfully!');
+                        window.location.reload();
                     }
                     
                     function goToMainSite() {

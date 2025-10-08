@@ -226,19 +226,16 @@ Click OK and check browser console for more details.`);
                 allKeys: Object.keys(localStorage),
                 allValues: Object.values(localStorage)
             });
-        } function logout() {
+        }
+        
+        function logout() {
             localStorage.removeItem('currentUser');
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('loginTime');
             sessionStorage.clear();
 
-            // Also call logout API if available
-            fetch(window.location.origin + '/api/logout', {
-                method: 'POST',
-                credentials: 'include'
-            }).finally(() => {
-                location.reload();
-            });
+            // Simple logout without API call (API endpoint has issues)
+            location.reload();
         }
     </script>
 </body>
