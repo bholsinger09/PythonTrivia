@@ -154,7 +154,7 @@
                     console.log('Stored user:', localStorage.getItem('currentUser'));
                     console.log('Is logged in:', localStorage.getItem('isLoggedIn'));
                     console.log('Login time:', localStorage.getItem('loginTime'));
-                    
+
                     // Show stored data in the message for debugging
                     setTimeout(() => {
                         const storedUser = JSON.parse(localStorage.getItem('currentUser'));
@@ -183,7 +183,7 @@
                 loginBtn.disabled = false;
             }
         });
-        
+
         function showLoggedInInterface(user) {
             // Replace the entire body content with a logged-in interface
             document.body.innerHTML = `

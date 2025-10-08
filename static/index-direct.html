@@ -92,7 +92,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             console.log('Page loaded, checking login status...');
             checkLoginStatus();
-            
+
             // Also check again after a short delay in case there are timing issues
             setTimeout(checkLoginStatus, 500);
         });
@@ -108,24 +108,24 @@
             const isLoggedIn = localStorage.getItem('isLoggedIn');
             const justLoggedIn = sessionStorage.getItem('justLoggedIn');
 
-            console.log('Storage values:', { 
-                storedUser: storedUser, 
-                isLoggedIn: isLoggedIn, 
+            console.log('Storage values:', {
+                storedUser: storedUser,
+                isLoggedIn: isLoggedIn,
                 justLoggedIn: justLoggedIn,
                 storedUserLength: storedUser ? storedUser.length : 0
             });
 
             // More robust checking
-            if (storedUser && storedUser !== 'null' && storedUser !== 'undefined' && 
+            if (storedUser && storedUser !== 'null' && storedUser !== 'undefined' &&
                 isLoggedIn === 'true') {
                 try {
                     const user = JSON.parse(storedUser);
                     console.log('✅ User found and parsed successfully:', user);
-                    
+
                     // Verify the user object has required fields
                     if (user && user.username && user.email && user.id) {
                         showLoggedInState(user, userStatusDiv, actionButtonsDiv);
-                        
+
                         // Clear the "just logged in" flag
                         sessionStorage.removeItem('justLoggedIn');
                         return;
@@ -181,7 +181,7 @@
                     User ID: ${user.id}
                 </div>
             `;
-            
+
             actionButtonsDiv.innerHTML = `
                 <a href="/game" class="btn btn-primary">🎮 Start Game</a>
                 <a href="/leaderboard" class="btn btn-secondary">🏆 Leaderboard</a>
@@ -189,7 +189,7 @@
                 <button onclick="logout()" class="btn btn-secondary">🚪 Logout</button>
             `;
         }
-        
+
         function showNotLoggedInState(userStatusDiv, actionButtonsDiv) {
             console.log('Showing not logged in state');
             userStatusDiv.innerHTML = `
@@ -198,7 +198,7 @@
                     Please log in to save your progress and compete on the leaderboard.
                 </div>
             `;
-            
+
             actionButtonsDiv.innerHTML = `
                 <a href="/static/login-direct.html" class="btn btn-primary">🔑 Login</a>
                 <a href="/static/register-direct.html" class="btn btn-secondary">📝 Register</a>
@@ -206,19 +206,19 @@
                 <button onclick="showDebugInfo()" class="btn btn-secondary">🔍 Debug Login</button>
             `;
         }
-        
+
         function showDebugInfo() {
             const currentUser = localStorage.getItem('currentUser');
             const isLoggedIn = localStorage.getItem('isLoggedIn');
             const loginTime = localStorage.getItem('loginTime');
-            
+
             alert(`Debug Info:
 Current User: ${currentUser}
 Is Logged In: ${isLoggedIn}
 Login Time: ${loginTime}
             
 Click OK and check browser console for more details.`);
-            
+
             console.log('Full localStorage debug:', {
                 currentUser,
                 isLoggedIn,
@@ -226,7 +226,7 @@ Click OK and check browser console for more details.`);
                 allKeys: Object.keys(localStorage),
                 allValues: Object.values(localStorage)
             });
-        }        function logout() {
+        } function logout() {
             localStorage.removeItem('currentUser');
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('loginTime');

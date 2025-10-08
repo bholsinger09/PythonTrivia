@@ -1,31 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quick Login Test - Python Trivia</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
-        .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin: 20px 0; }
-        .success { background-color: #d4edda; color: #155724; }
-        .error { background-color: #f8d7da; color: #721c24; }
-        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
     </style>
 </head>
+
 <body>
     <div class="box">
         <h1>🐍 Quick Login Test</h1>
         <p>This page tests the complete login flow and localStorage persistence.</p>
-        
+
         <div>
             <input type="text" id="username" placeholder="Username" value="gametest">
             <input type="password" id="password" placeholder="Password" value="test123">
             <button onclick="quickLogin()">Quick Login</button>
         </div>
-        
+
         <div id="results"></div>
-        
+
         <div>
             <button onclick="checkStorage()">Check Storage</button>
             <button onclick="clearStorage()">Clear Storage</button>
@@ -42,9 +79,9 @@
         async function quickLogin() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            
+
             showResult('Logging in...', true);
-            
+
             try {
                 const response = await fetch('/api/login', {
                     method: 'POST',
@@ -114,10 +151,10 @@
         function testPersistence() {
             // Set test data
             localStorage.setItem('testKey', 'testValue');
-            
+
             // Check immediately
             const immediate = localStorage.getItem('testKey');
-            
+
             // Check after delay
             setTimeout(() => {
                 const delayed = localStorage.getItem('testKey');
@@ -125,7 +162,7 @@
                     Immediate: ${immediate ? '✅ Found' : '❌ Lost'}<br>
                     After 1s: ${delayed ? '✅ Found' : '❌ Lost'}<br>
                     <br>LocalStorage is ${delayed ? 'working correctly' : 'not working properly'}`, delayed === 'testValue');
-                
+
                 localStorage.removeItem('testKey');
             }, 1000);
         }
@@ -134,4 +171,5 @@
         window.addEventListener('load', checkStorage);
     </script>
 </body>
+
 </html>
