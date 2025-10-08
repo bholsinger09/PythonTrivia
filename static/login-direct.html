@@ -112,21 +112,35 @@
     </div>
 
     <script>
+        console.log('🚀 LOGIN PAGE LOADED - Debug version');
+        
         document.getElementById('loginForm').addEventListener('submit', async function (e) {
             e.preventDefault();
+            console.log('🔥 LOGIN FORM SUBMITTED');
 
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const loginBtn = document.getElementById('loginBtn');
             const messageDiv = document.getElementById('message');
 
+            console.log('📝 Login attempt:', {
+                username: username,
+                passwordLength: password.length,
+                timestamp: new Date().toISOString()
+            });
+
             // Show loading state
             loginBtn.textContent = 'Logging in...';
             loginBtn.disabled = true;
             messageDiv.style.display = 'none';
 
+            const apiUrl = window.location.origin + '/api/login';
+            console.log('🌐 Making request to:', apiUrl);
+            console.log('🌍 Window location origin:', window.location.origin);
+
             try {
-                const response = await fetch(window.location.origin + '/api/login', {
+                console.log('📡 Starting fetch request...');
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -137,13 +151,28 @@
                     })
                 });
 
+                console.log('📨 Response received:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    url: response.url,
+                    ok: response.ok
+                });
+
+                console.log('📊 Response headers:', [...response.headers.entries()]);
+
                 const result = await response.json();
+                console.log('📋 Response body parsed:', result);
 
                 if (response.ok) {
+                    console.log('✅ LOGIN SUCCESS - Response OK');
+                    console.log('🎉 User data received:', result.user);
+                    
                     messageDiv.textContent = 'Login successful! Welcome ' + result.user.username;
                     messageDiv.className = 'message success';
                     messageDiv.style.display = 'block';
 
+                    console.log('💾 Storing user data in localStorage...');
+                    
                     // Store user info in localStorage for the frontend
                     localStorage.setItem('currentUser', JSON.stringify(result.user));
                     localStorage.setItem('isLoggedIn', 'true');
@@ -153,14 +182,21 @@
                     sessionStorage.setItem('justLoggedIn', 'true');
 
                     // DEBUG: Let's test what we stored immediately
-                    console.log('=== LOGIN DEBUG ===');
+                    console.log('=== POST-STORAGE VERIFICATION ===');
+                    console.log('Stored currentUser:', localStorage.getItem('currentUser'));
+                    console.log('Stored isLoggedIn:', localStorage.getItem('isLoggedIn'));
+                    console.log('Stored loginTime:', localStorage.getItem('loginTime'));
+                    console.log('Session justLoggedIn:', sessionStorage.getItem('justLoggedIn'));
                     console.log('Stored user:', localStorage.getItem('currentUser'));
                     console.log('Is logged in:', localStorage.getItem('isLoggedIn'));
                     console.log('Login time:', localStorage.getItem('loginTime'));
 
                     // Show stored data in the message for debugging
                     setTimeout(() => {
+                        console.log('🔍 Verifying storage after 500ms delay...');
                         const storedUser = JSON.parse(localStorage.getItem('currentUser'));
+                        console.log('📱 Retrieved stored user:', storedUser);
+                        
                         messageDiv.innerHTML = `Login successful! Welcome ${result.user.username}<br>
                         <small>Stored data: ${storedUser.username} (${storedUser.email})</small><br>
                         <small>Storage test: isLoggedIn = ${localStorage.getItem('isLoggedIn')}</small>`;
@@ -168,19 +204,31 @@
 
                     // Redirect to static home page after 3 seconds (longer delay for debugging)
                     setTimeout(() => {
+                        console.log('🏠 Redirecting to logged-in interface...');
                         // Instead of redirecting, let's show the logged-in state right here
                         showLoggedInInterface(result.user);
                     }, 3000);
                 } else {
+                    console.log('❌ LOGIN FAILED - Response not OK');
+                    console.log('💥 Error response:', result);
+                    
                     messageDiv.textContent = result.error || 'Login failed';
                     messageDiv.className = 'message error';
                     messageDiv.style.display = 'block';
                 }
             } catch (error) {
+                console.log('🚨 NETWORK/FETCH ERROR:', error);
+                console.log('📍 Error details:', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
+                
                 messageDiv.textContent = 'Network error: ' + error.message;
                 messageDiv.className = 'message error';
                 messageDiv.style.display = 'block';
             } finally {
+                console.log('🔄 Login attempt completed, resetting button...');
                 // Reset button
                 loginBtn.textContent = 'Login';
                 loginBtn.disabled = false;
