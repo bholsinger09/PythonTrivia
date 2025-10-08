@@ -649,7 +649,6 @@ def start_game_api():
 
 @app.route('/api/me', methods=['GET'])
 @user_rate_limit
-@track_request_performance
 def check_session():
     """Check current user session status"""
     try:
@@ -714,7 +713,6 @@ def check_session():
 
 @app.route('/api/logout', methods=['POST'])
 @user_rate_limit
-@track_request_performance
 def logout_api():
     """Logout current user and clear session"""
     try:
