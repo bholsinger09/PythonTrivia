@@ -1,27 +1,32 @@
-#!/usr/bin/env python3
 """
-Production WSGI server configuration for Python Trivia Game
+WSGI entry point for Render deployment
+This ensures Render uses the correct Flask app with all routes
 """
+
 import os
+import sys
+
+# Add the current directory to Python path
+sys.path.insert(0, os.path.dirname(__file__))
+
+# Import the main Flask application
 from app import app
 
-# Initialize database for production if needed
-def create_tables():
-    """Initialize database tables on first deployment"""
-    with app.app_context():
-        try:
-            from models import db
-            db.create_all()
-            print("Database tables created successfully")
-        except Exception as e:
-            print(f"Database initialization warning: {e}")
+# Ensure all routes are registered
+if __name__ != "__main__":
+    # When imported by WSGI server, this will run
+    print("🚀 WSGI: Importing Flask app with all routes...")
+    
+    # Debug: Print registered routes
+    print(f"📋 WSGI: Total routes registered: {len(list(app.url_map.iter_rules()))}")
+    for rule in list(app.url_map.iter_rules())[:10]:  # First 10 routes
+        print(f"   - {rule.rule} -> {rule.endpoint}")
 
-# Create tables on import for production
-if os.environ.get('FLASK_ENV') == 'production':
-    create_tables()
+# WSGI application
+application = app
 
-# For gunicorn: this exposes the Flask app
 if __name__ == "__main__":
-    # Only for local testing - gunicorn doesn't use this
-    port = int(os.environ.get("PORT", 5001))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    # For direct execution
+    port = int(os.environ.get('PORT', 5000))
+    print(f"🚀 Direct execution: Starting on port {port}")
+    app.run(host='0.0.0.0', port=port)
