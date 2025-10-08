@@ -5,182 +5,182 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Python Trivia Game</title>PE html>
-<html lang="en">
+    <html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python Trivia - Home</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Python Trivia - Home</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f5f5f5;
+            }
 
-        .header {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
+            .header {
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                margin-bottom: 20px;
+            }
 
-        .user-info {
-            background: #d4edda;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            border: 1px solid #c3e6cb;
-        }
+            .user-info {
+                background: #d4edda;
+                padding: 15px;
+                border-radius: 4px;
+                margin-bottom: 20px;
+                border: 1px solid #c3e6cb;
+            }
 
-        .not-logged-in {
-            background: #f8d7da;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            border: 1px solid #f5c6cb;
-        }
+            .not-logged-in {
+                background: #f8d7da;
+                padding: 15px;
+                border-radius: 4px;
+                margin-bottom: 20px;
+                border: 1px solid #f5c6cb;
+            }
 
-        .actions {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
+            .actions {
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
 
-        .btn {
-            padding: 10px 20px;
-            margin: 5px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
+            .btn {
+                padding: 10px 20px;
+                margin: 5px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                text-decoration: none;
+                display: inline-block;
+            }
 
-        .btn-primary {
-            background-color: #007bff;
-            color: white;
-        }
+            .btn-primary {
+                background-color: #007bff;
+                color: white;
+            }
 
-        .btn-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
+            .btn-secondary {
+                background-color: #6c757d;
+                color: white;
+            }
 
-        .btn:hover {
-            opacity: 0.8;
-        }
-    </style>
-</head>
+            .btn:hover {
+                opacity: 0.8;
+            }
+        </style>
+    </head>
 
-<body>
-    <div class="header">
-        <h1>🐍 Python Trivia Game</h1>
-        <p>Test your Python programming knowledge!</p>
+    <body>
+        <div class="header">
+            <h1>🐍 Python Trivia Game</h1>
+            <p>Test your Python programming knowledge!</p>
 
-        <div id="userStatus">
-            <!-- Login status will be populated by JavaScript -->
+            <div id="userStatus">
+                <!-- Login status will be populated by JavaScript -->
+            </div>
         </div>
-    </div>
 
-    <div class="actions">
-        <h2>Quick Actions</h2>
-        <div id="actionButtons">
-            <!-- Action buttons will be populated by JavaScript -->
+        <div class="actions">
+            <h2>Quick Actions</h2>
+            <div id="actionButtons">
+                <!-- Action buttons will be populated by JavaScript -->
+            </div>
         </div>
-    </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            console.log('Page loaded, checking login status...');
-            checkLoginStatus();
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                console.log('Page loaded, checking login status...');
+                checkLoginStatus();
 
-            // Also check again after a short delay in case there are timing issues
-            setTimeout(checkLoginStatus, 500);
-        });
-
-        async function checkLoginStatus() {
-            const userStatusDiv = document.getElementById('userStatus');
-            const actionButtonsDiv = document.getElementById('actionButtons');
-
-            console.log('=== Login Status Check ===');
-
-            // Check localStorage first (from our static login)
-            const storedUser = localStorage.getItem('currentUser');
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
-            const justLoggedIn = sessionStorage.getItem('justLoggedIn');
-
-            console.log('Storage values:', {
-                storedUser: storedUser,
-                isLoggedIn: isLoggedIn,
-                justLoggedIn: justLoggedIn,
-                storedUserLength: storedUser ? storedUser.length : 0
+                // Also check again after a short delay in case there are timing issues
+                setTimeout(checkLoginStatus, 500);
             });
 
-            // More robust checking
-            if (storedUser && storedUser !== 'null' && storedUser !== 'undefined' &&
-                isLoggedIn === 'true') {
-                try {
-                    const user = JSON.parse(storedUser);
-                    console.log('✅ User found and parsed successfully:', user);
+            async function checkLoginStatus() {
+                const userStatusDiv = document.getElementById('userStatus');
+                const actionButtonsDiv = document.getElementById('actionButtons');
 
-                    // Verify the user object has required fields
-                    if (user && user.username && user.email && user.id) {
-                        showLoggedInState(user, userStatusDiv, actionButtonsDiv);
+                console.log('=== Login Status Check ===');
 
-                        // Clear the "just logged in" flag
-                        sessionStorage.removeItem('justLoggedIn');
-                        return;
-                    } else {
-                        console.log('❌ User object missing required fields:', user);
-                    }
-                } catch (e) {
-                    console.error('❌ Error parsing stored user:', e);
-                    // Clear invalid data
-                    localStorage.removeItem('currentUser');
-                    localStorage.removeItem('isLoggedIn');
-                }
-            } else {
-                console.log('❌ No valid localStorage data found');
-            }
+                // Check localStorage first (from our static login)
+                const storedUser = localStorage.getItem('currentUser');
+                const isLoggedIn = localStorage.getItem('isLoggedIn');
+                const justLoggedIn = sessionStorage.getItem('justLoggedIn');
 
-            // Also try to check server-side session (if /api/me is available)
-            try {
-                console.log('Trying server-side session check...');
-                const response = await fetch('/api/me', {
-                    method: 'GET',
-                    credentials: 'include' // Include cookies
+                console.log('Storage values:', {
+                    storedUser: storedUser,
+                    isLoggedIn: isLoggedIn,
+                    justLoggedIn: justLoggedIn,
+                    storedUserLength: storedUser ? storedUser.length : 0
                 });
 
-                console.log('Server response status:', response.status);
+                // More robust checking
+                if (storedUser && storedUser !== 'null' && storedUser !== 'undefined' &&
+                    isLoggedIn === 'true') {
+                    try {
+                        const user = JSON.parse(storedUser);
+                        console.log('✅ User found and parsed successfully:', user);
 
-                if (response.ok) {
-                    const userData = await response.json();
-                    console.log('Server session data:', userData);
-                    if (userData.authenticated && userData.user) {
-                        console.log('✅ Server session found');
-                        showLoggedInState(userData.user, userStatusDiv, actionButtonsDiv);
-                        // Store in localStorage for consistency
-                        localStorage.setItem('currentUser', JSON.stringify(userData.user));
-                        localStorage.setItem('isLoggedIn', 'true');
-                        return;
+                        // Verify the user object has required fields
+                        if (user && user.username && user.email && user.id) {
+                            showLoggedInState(user, userStatusDiv, actionButtonsDiv);
+
+                            // Clear the "just logged in" flag
+                            sessionStorage.removeItem('justLoggedIn');
+                            return;
+                        } else {
+                            console.log('❌ User object missing required fields:', user);
+                        }
+                    } catch (e) {
+                        console.error('❌ Error parsing stored user:', e);
+                        // Clear invalid data
+                        localStorage.removeItem('currentUser');
+                        localStorage.removeItem('isLoggedIn');
                     }
+                } else {
+                    console.log('❌ No valid localStorage data found');
                 }
-            } catch (error) {
-                console.log('Server session check failed (expected if /api/me not deployed):', error.message);
+
+                // Also try to check server-side session (if /api/me is available)
+                try {
+                    console.log('Trying server-side session check...');
+                    const response = await fetch('/api/me', {
+                        method: 'GET',
+                        credentials: 'include' // Include cookies
+                    });
+
+                    console.log('Server response status:', response.status);
+
+                    if (response.ok) {
+                        const userData = await response.json();
+                        console.log('Server session data:', userData);
+                        if (userData.authenticated && userData.user) {
+                            console.log('✅ Server session found');
+                            showLoggedInState(userData.user, userStatusDiv, actionButtonsDiv);
+                            // Store in localStorage for consistency
+                            localStorage.setItem('currentUser', JSON.stringify(userData.user));
+                            localStorage.setItem('isLoggedIn', 'true');
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.log('Server session check failed (expected if /api/me not deployed):', error.message);
+                }
+
+                console.log('❌ No valid session found, showing not logged in state');
+                showNotLoggedInState(userStatusDiv, actionButtonsDiv);
             }
 
-            console.log('❌ No valid session found, showing not logged in state');
-            showNotLoggedInState(userStatusDiv, actionButtonsDiv);
-        }
-
-        function showLoggedInState(user, userStatusDiv, actionButtonsDiv) {
-            console.log('Showing logged in state for user:', user);
-            userStatusDiv.innerHTML = `
+            function showLoggedInState(user, userStatusDiv, actionButtonsDiv) {
+                console.log('Showing logged in state for user:', user);
+                userStatusDiv.innerHTML = `
                 <div class="user-info">
                     <strong>Welcome back, ${user.username}!</strong><br>
                     Email: ${user.email}<br>
@@ -188,66 +188,66 @@
                 </div>
             `;
 
-            actionButtonsDiv.innerHTML = `
+                actionButtonsDiv.innerHTML = `
                 <a href="/game" class="btn btn-primary">🎮 Start Game</a>
                 <a href="/leaderboard" class="btn btn-secondary">🏆 Leaderboard</a>
                 <a href="/profile" class="btn btn-secondary">👤 Profile</a>
                 <button onclick="logout()" class="btn btn-secondary">🚪 Logout</button>
             `;
-        }
+            }
 
-        function showNotLoggedInState(userStatusDiv, actionButtonsDiv) {
-            console.log('Showing not logged in state');
-            userStatusDiv.innerHTML = `
+            function showNotLoggedInState(userStatusDiv, actionButtonsDiv) {
+                console.log('Showing not logged in state');
+                userStatusDiv.innerHTML = `
                 <div class="not-logged-in">
                     <strong>Not logged in</strong><br>
                     Please log in to save your progress and compete on the leaderboard.
                 </div>
             `;
 
-            actionButtonsDiv.innerHTML = `
+                actionButtonsDiv.innerHTML = `
                 <a href="/static/login-direct.html" class="btn btn-primary">🔑 Login</a>
                 <a href="/static/register-direct.html" class="btn btn-secondary">📝 Register</a>
                 <a href="/game" class="btn btn-secondary">🎮 Play as Guest</a>
                 <button onclick="showDebugInfo()" class="btn btn-secondary">🔍 Debug Login</button>
             `;
-        }
+            }
 
-        function showDebugInfo() {
-            const currentUser = localStorage.getItem('currentUser');
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
-            const loginTime = localStorage.getItem('loginTime');
+            function showDebugInfo() {
+                const currentUser = localStorage.getItem('currentUser');
+                const isLoggedIn = localStorage.getItem('isLoggedIn');
+                const loginTime = localStorage.getItem('loginTime');
 
-            alert(`Debug Info:
+                alert(`Debug Info:
 Current User: ${currentUser}
 Is Logged In: ${isLoggedIn}
 Login Time: ${loginTime}
             
 Click OK and check browser console for more details.`);
 
-            console.log('Full localStorage debug:', {
-                currentUser,
-                isLoggedIn,
-                loginTime,
-                allKeys: Object.keys(localStorage),
-                allValues: Object.values(localStorage)
-            });
-        }
-        
-        function logout() {
-            console.log('🚪 LOGOUT FUNCTION CALLED - New version without API');
-            
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('loginTime');
-            sessionStorage.clear();
-            
-            console.log('✅ All storage cleared');
+                console.log('Full localStorage debug:', {
+                    currentUser,
+                    isLoggedIn,
+                    loginTime,
+                    allKeys: Object.keys(localStorage),
+                    allValues: Object.values(localStorage)
+                });
+            }
 
-            // Simple logout without API call (API endpoint has issues)
-            location.reload();
-        }
-    </script>
-</body>
+            function logout() {
+                console.log('🚪 LOGOUT FUNCTION CALLED - New version without API');
 
-</html>
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('loginTime');
+                sessionStorage.clear();
+
+                console.log('✅ All storage cleared');
+
+                // Simple logout without API call (API endpoint has issues)
+                location.reload();
+            }
+        </script>
+    </body>
+
+    </html>
