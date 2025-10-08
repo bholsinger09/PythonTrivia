@@ -760,3 +760,90 @@ def logout_api():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+@app.route('/api/seed-questions', methods=['POST'])
+@user_rate_limit  
+@track_request_performance
+def seed_basic_questions():
+    """Seed database with basic Python questions for testing"""
+    try:
+        # Check if questions already exist
+        existing_questions = Question.query.count()
+        if existing_questions > 0:
+            return jsonify({
+                'message': f'Database already has {existing_questions} questions',
+                'skipped': True
+            })
+        
+        # Basic Python questions
+        sample_questions = [
+            {
+                'question': 'What is the output of print(2 ** 3)?',
+                'choices': ['6', '8', '9', '12'],
+                'correct_answer': '8',
+                'difficulty': 'Easy',
+                'category': 'Basic Syntax',
+                'explanation': '2 ** 3 means 2 to the power of 3, which equals 8.'
+            }
+        ]
+        
+        created_count = 0
+        for q_data in sample_questions:
+            question = Question(
+                question_text=q_data['question'],
+                choices=json.dumps(q_data['choices']),
+                correct_answer=q_data['correct_answer'],
+                difficulty=Difficulty(q_data['difficulty']),
+                category=Category(q_data['category']),
+                explanation=q_data['explanation'],
+                is_active=True
+            )
+            db.session.add(question)
+            created_count += 1
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully seeded {created_count} questions',
+            'created': created_count
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+@app.route('/api/seed-questions', methods=['POST'])
+@user_rate_limit  
+@track_request_performance
+def seed_basic_questions():
+    """Seed database with basic Python questions for testing"""
+    try:
+        # Check if questions already exist
+        existing_questions = Question.query.count()
+        if existing_questions > 0:
+            return jsonify({
+                'message': f'Database already has {existing_questions} questions',
+                'skipped': True
+            })
+        
+        # Basic Python question
+        question = Question(
+            question_text='What is the output of print(2 ** 3)?',
+            choices=json.dumps(['6', '8', '9', '12']),
+            correct_answer='8',
+            difficulty=Difficulty('Easy'),
+            category=Category('Basic Syntax'),
+            explanation='2 ** 3 means 2 to the power of 3, which equals 8.',
+            is_active=True
+        )
+        db.session.add(question)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Successfully seeded 1 question',
+            'created': 1
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
