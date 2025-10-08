@@ -679,6 +679,7 @@ def check_session():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/session-check')  # Added missing route decorator
 @user_rate_limit
 @track_request_performance
 def check_session():
