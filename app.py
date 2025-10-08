@@ -395,65 +395,6 @@ def service_worker():
     except FileNotFoundError:
         return "Service worker not found", 404
 
-
-@app.route('/simple-debug')
-def simple_debug():
-    """Simple debug endpoint to check deployment and route registration"""
-    from datetime import datetime
-    routes = []
-    for rule in app.url_map.iter_rules():
-        routes.append(str(rule.rule))
-    
-    return jsonify({
-        'message': 'Simple debug working on Render',
-        'timestamp': datetime.now().isoformat(),
-        'total_routes': len(routes),
-        'has_login_route': '/login' in routes,
-        'sample_routes': sorted(routes)[:15],
-        'login_routes': [r for r in routes if 'login' in r.lower()],
-        'debug_routes': [r for r in routes if 'debug' in r.lower()],
-        'deployment_info': {
-            'version': 'simple-debug-v1',
-            'flask_debug': app.debug,
-            'flask_env': app.config.get('ENV', 'not-set')
-        }
-    })
-
-
-@app.route('/deployment-check')
-def deployment_check():
-    """Comprehensive deployment debugging endpoint"""
-    from datetime import datetime
-    import os
-    
-    routes = []
-    for rule in app.url_map.iter_rules():
-        routes.append({
-            'rule': str(rule.rule),
-            'endpoint': rule.endpoint,
-            'methods': list(rule.methods)
-        })
-    
-    return jsonify({
-        'status': 'deployment-check-working',
-        'timestamp': datetime.now().isoformat(),
-        'environment': {
-            'FLASK_ENV': os.environ.get('FLASK_ENV', 'not-set'),
-            'FLASK_DEBUG': os.environ.get('FLASK_DEBUG', 'not-set'),
-            'PORT': os.environ.get('PORT', 'not-set'),
-            'RENDER': os.environ.get('RENDER', 'not-set')
-        },
-        'flask_config': {
-            'DEBUG': app.debug,
-            'ENV': app.config.get('ENV', 'not-set'),
-            'SECRET_KEY_SET': bool(app.config.get('SECRET_KEY'))
-        },
-        'route_analysis': {
-            'total_routes': len(routes),
-            'routes': routes
-        }
-    })
-
 if __name__ == '__main__':
     # Initialize database on startup
     initialize_database()
@@ -647,39 +588,6 @@ def save_score():
         'message': 'Score saved successfully!'
     })
 
-
-    """Comprehensive deployment debugging endpoint"""
-    from datetime import datetime
-    import os
-    
-    routes = []
-    for rule in app.url_map.iter_rules():
-        routes.append({
-            'rule': str(rule.rule),
-            'endpoint': rule.endpoint,
-            'methods': list(rule.methods)
-        })
-    
-    return jsonify({
-        'status': 'deployment-check-working',
-        'timestamp': datetime.now().isoformat(),
-        'environment': {
-            'FLASK_ENV': os.environ.get('FLASK_ENV', 'not-set'),
-            'FLASK_DEBUG': os.environ.get('FLASK_DEBUG', 'not-set'),
-            'PORT': os.environ.get('PORT', 'not-set'),
-            'RENDER': os.environ.get('RENDER', 'not-set')
-        },
-        'flask_config': {
-            'DEBUG': app.debug,
-            'ENV': app.config.get('ENV', 'not-set'),
-            'SECRET_KEY_SET': bool(app.config.get('SECRET_KEY'))
-        },
-        'route_analysis': {
-            'total_routes': len(routes),
-            'routes': routes
-        }
-    })
-
 if __name__ == '__main__':
     # Initialize database on startup
     initialize_database()
@@ -791,6 +699,7 @@ def logout_api():
         return jsonify({'error': str(e)}), 500
 @app.route('/api/seed-questions', methods=['POST'])
 @user_rate_limit  
+# TEMP DISABLED: @track_request_performance
 def seed_basic_questions():
     """Seed database with basic Python questions for testing"""
     try:
