@@ -23,36 +23,13 @@ def index():
     """Main landing page"""
     return render_template('index.html')
 
-@app.route('/login', methods=['GET'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     """Login page"""
-    return render_template('login.html')
-
-@app.route('/api/login', methods=['POST'])
-def api_login():
-    """API endpoint for login"""
-    try:
-        data = request.get_json()
-        username = data.get('username')
-        password = data.get('password')
-        
-        # Simple validation for minimal app
-        if not username or not password:
-            return jsonify({'error': 'Username and password required'}), 400
-        
-        # For minimal app, just accept any credentials
-        # In production, this would check against database
-        if len(username) > 0 and len(password) > 0:
-            session['user'] = username
-            return jsonify({
-                'message': 'Login successful',
-                'user': username
-            })
-        else:
-            return jsonify({'error': 'Invalid credentials'}), 401
-            
-    except Exception as e:
-        return jsonify({'error': 'Server error during login'}), 500
+    if request.method == 'GET':
+        return render_template('login.html')
+    # POST handling here
+    return jsonify({'message': 'Login endpoint working'})
 
 @app.route('/game')
 def game():
@@ -93,7 +70,7 @@ def simple_debug():
         'total_routes': len(routes),
         'routes': sorted(routes),
         'deployment_info': {
-            'version': 'minimal-v1.1-with-api-login',
+            'version': 'minimal-v1.0',
             'flask_debug': app.debug,
             'flask_env': app.config.get('ENV', 'not-set')
         }
