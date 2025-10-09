@@ -11,7 +11,7 @@ const CACHE_ASSETS = [
   '/',
   '/static/css/style.css',
   '/static/js/app.js',
-  '/static/js/game.js',
+  '/static/js/app.js',
   '/static/manifest.json',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
   // Core pages

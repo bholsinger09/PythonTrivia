@@ -28,7 +28,7 @@ A comprehensive Python trivia game built with Flask, featuring database-backed u
 - **RESTful API**: Complete API for all game operations
 - **Responsive Design**: Mobile-first design that works on all devices
 - **Test Automation**: Comprehensive Selenium test suite
-- **Production Ready**: Configured for deployment on Render, Heroku, and Railway
+- **Production Ready**: Configured for deployment on Render and Heroku
 
 ## 🚀 Quick Start
 
@@ -101,15 +101,12 @@ Ready to deploy your trivia game? We've got you covered with multiple deployment
 
 [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/bholsinger09/PythonTrivia)
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/python-trivia)
-
 ### Manual Deployment
 
 Choose your preferred platform:
 
 - **🔥 Heroku** - Perfect for beginners, free tier available
-- **🚄 Railway** - Modern platform with automatic HTTPS
-- **🎨 Render** - Free tier with built-in CI/CD
+- **🎨 Render** - Free tier with built-in CI/CD (Currently deployed)
 - **🐳 Docker** - Deploy anywhere with container support
 
 **Detailed instructions:** See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment guide.

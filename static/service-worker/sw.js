@@ -3,8 +3,8 @@
  * Provides offline functionality, caching, and background sync
  */
 
-const CACHE_NAME = 'python-trivia-v2.0.0-cache-bust';
-const OFFLINE_CACHE = 'python-trivia-offline-v2';
+const CACHE_NAME = 'python-trivia-v1.0.0';
+const OFFLINE_CACHE = 'python-trivia-offline-v1';
 
 // Assets to cache for offline functionality
 const CACHE_ASSETS = [
@@ -147,25 +147,29 @@ async function handleAssetRequest(request) {
 // Handle page requests with cache-first, then network
 async function handlePageRequest(request) {
   try {
-    // Try network first for fresh content
-    const response = await fetch(request);
-    if (response.ok) {
-      // Cache the fresh response
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
-      return response;
-    }
-    throw new Error(`Network response not ok: ${response.status}`);
-  } catch (error) {
-    console.log('🔄 Network failed, trying cache:', request.url);
-    
-    // Fallback to cache only if network fails
+    // Try cache first for faster loading
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
+      // Update cache in background
+      fetch(request).then((response) => {
+        if (response.ok) {
+          const cache = caches.open(CACHE_NAME);
+          cache.then(c => c.put(request, response));
+        }
+      }).catch(() => {}); // Silent fail for background updates
+      
       return cachedResponse;
     }
     
-    console.log('📄 No cache available, returning offline page:', request.url);
+    // Fallback to network
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    console.log('📄 Page request failed, returning offline page:', request.url);
     return createOfflinePage();
   }
 }
