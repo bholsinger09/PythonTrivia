@@ -17,22 +17,6 @@ if os.environ.get('FLASK_ENV') == 'production':
 else:
     app.config['DEBUG'] = True
 
-# Helper function to create user object for templates
-def get_current_user():
-    """Get current user from session for template compatibility"""
-    user = session.get('user')
-    if user:
-        return {
-            'username': user,
-            'is_authenticated': True
-        }
-    return None
-
-# Add template context processor to make current_user available in all templates
-@app.context_processor
-def inject_user():
-    return {'current_user': get_current_user()}
-
 # Basic routes
 @app.route('/')
 def index():
@@ -70,12 +54,6 @@ def api_login():
     except Exception as e:
         return jsonify({'error': 'Server error during login'}), 500
 
-@app.route('/logout')
-def logout():
-    """Logout endpoint"""
-    session.pop('user', None)
-    return redirect('/')
-
 @app.route('/game')
 def game():
     """Game page with minimal stats"""
@@ -109,17 +87,13 @@ def simple_debug():
     for rule in app.url_map.iter_rules():
         routes.append(str(rule.rule))
     
-    current_user = get_current_user()
-    
     return jsonify({
         'message': 'MINIMAL APP WORKING on Render',
         'timestamp': datetime.now().isoformat(),
         'total_routes': len(routes),
         'routes': sorted(routes),
-        'session_user': session.get('user'),
-        'current_user': current_user,
         'deployment_info': {
-            'version': 'minimal-v1.2-with-session-fix',
+            'version': 'minimal-v1.1-with-api-login',
             'flask_debug': app.debug,
             'flask_env': app.config.get('ENV', 'not-set')
         }
