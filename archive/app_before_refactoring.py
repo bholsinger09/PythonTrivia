@@ -8,26 +8,17 @@ A minimal, clean Flask application for a Python trivia game featuring:
 - Score tracking and leaderboards
 
 Author: Python Trivia Team
-Version: 2.1.0-refactored
+Version: 2.0.0-clean
 """
 
 import os
-import logging
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 # Constants
 DEFAULT_SECRET_KEY = 'dev-secret-key-change-in-production'
 DEFAULT_PORT = 5000
 DEFAULT_GAME_CARDS = 10
-APP_VERSION = '2.1.0-refactored'
 
 class TriviaApp:
     """Main application class for Python Trivia game."""
@@ -36,7 +27,7 @@ class TriviaApp:
         """Initialize the Flask application with configuration."""
         self.app = Flask(__name__)
         self._configure_app()
-        self._register_all_routes()
+        self._register_routes()
         self._register_context_processors()
     
     def _configure_app(self):
@@ -48,7 +39,6 @@ class TriviaApp:
         self.app.config['DEBUG'] = not is_production
         
         if is_production and self.app.secret_key == DEFAULT_SECRET_KEY:
-            logger.warning("Using default secret key in production!")
             raise ValueError("SECRET_KEY must be set in production environment")
     
     def _register_context_processors(self):
@@ -100,14 +90,8 @@ class TriviaApp:
             
         return True, None
     
-    def _register_all_routes(self):
-        """Register all application routes by category."""
-        self._register_page_routes()
-        self._register_api_routes()
-        self._register_asset_routes()
-    
-    def _register_page_routes(self):
-        """Register routes that serve HTML pages."""
+    def _register_routes(self):
+        """Register all application routes."""
         
         @self.app.route('/')
         def index():
@@ -118,6 +102,41 @@ class TriviaApp:
         def login():
             """Display login page."""
             return render_template('login.html')
+        
+        @self.app.route('/api/login', methods=['POST'])
+        def api_login():
+            """
+            Handle login API requests.
+            
+            Returns:
+                JSON response with login result
+            """
+            try:
+                data = request.get_json()
+                is_valid, error_message = self._validate_login_data(data)
+                
+                if not is_valid:
+                    return jsonify({'error': error_message}), 400
+                
+                username = data['username'].strip()
+                # Note: In a real application, password validation would be performed here
+                # For this minimal version, we accept any valid username/password combination
+                
+                session['user'] = username
+                return jsonify({
+                    'message': 'Login successful',
+                    'user': username
+                })
+                
+            except Exception as e:
+                # Log error in production
+                return jsonify({'error': 'Server error during login'}), 500
+        
+        @self.app.route('/logout')
+        def logout():
+            """Handle user logout."""
+            session.pop('user', None)
+            return redirect('/')
         
         @self.app.route('/game')
         def game():
@@ -133,68 +152,17 @@ class TriviaApp:
         @self.app.route('/categories')
         def categories():
             """Display categories page."""
-            # Provide sample categories data for the template
-            categories_data = self._get_sample_categories()
-            return render_template('categories.html', categories=categories_data)
+            return render_template('categories.html')
         
         @self.app.route('/difficulty')
         def difficulty():
             """Display difficulty selection page."""
-            # Provide sample difficulty data for the template
-            difficulties = self._get_sample_difficulties()
-            return render_template('difficulty.html', difficulties=difficulties)
+            return render_template('difficulty.html')
         
         @self.app.route('/leaderboard')
         def leaderboard():
             """Display leaderboard page."""
-            # Provide sample leaderboard data for the template
-            leaderboard_data = self._get_sample_leaderboard()
-            return render_template('leaderboard.html', 
-                                 leaderboard=leaderboard_data,
-                                 current_user_rank=None)
-    
-    def _register_api_routes(self):
-        """Register API endpoints for data operations."""
-        
-        @self.app.route('/api/login', methods=['POST'])
-        def api_login():
-            """
-            Handle login API requests.
-            
-            Returns:
-                JSON response with login result
-            """
-            try:
-                data = request.get_json()
-                is_valid, error_message = self._validate_login_data(data)
-                
-                if not is_valid:
-                    logger.warning(f"Login validation failed: {error_message}")
-                    return jsonify({'error': error_message}), 400
-                
-                username = data['username'].strip()
-                # Note: In a real application, password validation would be performed here
-                # For this minimal version, we accept any valid username/password combination
-                
-                session['user'] = username
-                logger.info(f"User {username} logged in successfully")
-                return jsonify({
-                    'message': 'Login successful',
-                    'user': username
-                })
-                
-            except Exception as e:
-                logger.error(f"Login error: {e}")
-                return jsonify({'error': 'Server error during login'}), 500
-        
-        @self.app.route('/logout')
-        def logout():
-            """Handle user logout."""
-            username = session.get('user')
-            session.pop('user', None)
-            if username:
-                logger.info(f"User {username} logged out")
-            return redirect('/')
+            return render_template('leaderboard.html')
         
         @self.app.route('/api/debug')
         def api_debug():
@@ -208,91 +176,23 @@ class TriviaApp:
             current_user = self._get_current_user()
             
             return jsonify({
-                'message': 'Python Trivia App - Refactored Version',
+                'message': 'Python Trivia App - Clean Version',
                 'timestamp': datetime.now().isoformat(),
                 'total_routes': len(routes),
                 'routes': sorted(routes),
                 'session_user': session.get('user'),
                 'current_user': current_user,
                 'deployment_info': {
-                    'version': APP_VERSION,
+                    'version': '2.0.0-clean',
                     'flask_debug': self.app.debug,
                     'flask_env': self.app.config.get('ENV', 'not-set')
                 }
             })
-    
-    def _register_asset_routes(self):
-        """Register routes for static assets and PWA files."""
         
         @self.app.route('/sw.js')
         def service_worker():
             """Serve service worker for PWA functionality."""
             return self.app.send_static_file('sw.js')
-        
-        @self.app.route('/manifest.json')
-        def manifest():
-            """Serve PWA manifest file."""
-            return self.app.send_static_file('manifest.json')
-    
-    def _get_sample_categories(self):
-        """Get sample category data for templates."""
-        return {
-            'basics': {
-                'name': 'Python Basics',
-                'description': 'Fundamental Python concepts',
-                'question_count': 25
-            },
-            'data_structures': {
-                'name': 'Data Structures',
-                'description': 'Lists, dictionaries, sets, and tuples',
-                'question_count': 20
-            },
-            'functions': {
-                'name': 'Functions & Modules',
-                'description': 'Function definitions and imports',
-                'question_count': 15
-            },
-            'object_oriented_programming': {
-                'name': 'Object-Oriented Programming',
-                'description': 'Classes, inheritance, and polymorphism',
-                'question_count': 18
-            },
-            'libraries': {
-                'name': 'Libraries & Frameworks',
-                'description': 'Popular Python libraries',
-                'question_count': 12
-            }
-        }
-    
-    def _get_sample_difficulties(self):
-        """Get sample difficulty data for templates."""
-        return {
-            'easy': {
-                'name': 'Easy',
-                'description': 'Perfect for beginners',
-                'question_count': 30
-            },
-            'medium': {
-                'name': 'Medium',
-                'description': 'For intermediate programmers',
-                'question_count': 25
-            },
-            'hard': {
-                'name': 'Hard',
-                'description': 'Challenge for experts',
-                'question_count': 15
-            }
-        }
-    
-    def _get_sample_leaderboard(self):
-        """Get sample leaderboard data for templates."""
-        return [
-            {'username': 'PythonMaster', 'score': 950, 'games_played': 12},
-            {'username': 'CodeNinja', 'score': 890, 'games_played': 10},
-            {'username': 'SnakeCharmer', 'score': 825, 'games_played': 8},
-            {'username': 'ByteBender', 'score': 780, 'games_played': 15},
-            {'username': 'LogicLover', 'score': 725, 'games_played': 6}
-        ]
     
     def run(self, host='0.0.0.0', port=None, debug=None):
         """
@@ -309,7 +209,7 @@ class TriviaApp:
         if debug is None:
             debug = self.app.config['DEBUG']
         
-        logger.info(f"Starting Python Trivia App {APP_VERSION} on {host}:{port}")
+        print(f"🚀 Starting Python Trivia App v2.0.0-clean on {host}:{port}")
         self.app.run(host=host, port=port, debug=debug)
 
 # Create application instance
